@@ -1,16 +1,16 @@
-package pe.edu.upeu.pharmamobil.data.repository
+package pe.edu.upeu.pharmamobil.producto.data.repository
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import pe.edu.upeu.pharmamobil.domain.model.DetalleVenta
-import pe.edu.upeu.pharmamobil.domain.model.Medicamento
-import pe.edu.upeu.pharmamobil.domain.model.Venta
-import pe.edu.upeu.pharmamobil.domain.repository.FarmaciaRepository
+import pe.edu.upeu.pharmamobil.producto.domain.model.DetalleVenta
+import pe.edu.upeu.pharmamobil.producto.domain.model.Medicamento
+import pe.edu.upeu.pharmamobil.producto.domain.model.Venta
+import pe.edu.upeu.pharmamobil.producto.domain.repository.ProductoRepository
 
-class FarmaciaRepositoryImpl : FarmaciaRepository {
+class ProductoRepositoryImpl : ProductoRepository {
 
     private val _medicamentos = MutableStateFlow(generarMedicamentosIniciales())
 
@@ -57,17 +57,57 @@ class FarmaciaRepositoryImpl : FarmaciaRepository {
 
         return Venta.crear(
             id = "VTN-${kotlin.random.Random.nextLong(10000, 99999)}",
-            fecha = obtenerFechaActual(),
+            fecha = "2026-08-18 08:00",
             items = listOf(detalle)
         )
     }
 
-    override fun observarMedicamentos(): Flow<List<Medicamento>> {
-        return _medicamentos.asStateFlow()
+    override suspend fun registrarMedicamento(
+        nombre: String,
+        descripcion: String?,
+        precio: Double,
+        stock: Int,
+        requiereReceta: Boolean,
+        categoria: String
+    ): Medicamento {
+        delay(1000)
+
+        if (nombre.isBlank()) {
+            throw IllegalArgumentException("El nombre del medicamento no puede estar vacío")
+        }
+        if (precio < 0.0) {
+            throw IllegalArgumentException("El precio no puede ser negativo")
+        }
+        if (stock < 0) {
+            throw IllegalArgumentException("El stock no puede ser negativo")
+        }
+
+        val nombreDuplicado = _medicamentos.value.any {
+            it.nombre.equals(nombre, ignoreCase = true)
+        }
+        if (nombreDuplicado) {
+            throw IllegalArgumentException("Ya existe un medicamento con el nombre: $nombre")
+        }
+
+        val nuevoMedicamento = Medicamento(
+            id = "MED-${kotlin.random.Random.nextLong(100, 999)}",
+            nombre = nombre.trim(),
+            descripcion = descripcion?.trim(),
+            precio = precio,
+            stock = stock,
+            requiereReceta = requiereReceta,
+            categoria = categoria.trim()
+        )
+
+        _medicamentos.update { lista ->
+            lista + nuevoMedicamento
+        }
+
+        return nuevoMedicamento
     }
 
-    private fun obtenerFechaActual(): String {
-        return "2026-08-18 08:00"
+    override fun observarMedicamentos(): Flow<List<Medicamento>> {
+        return _medicamentos.asStateFlow()
     }
 
     private fun generarMedicamentosIniciales(): List<Medicamento> {

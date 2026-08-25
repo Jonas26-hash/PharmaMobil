@@ -1,4 +1,4 @@
-package pe.edu.upeu.pharmamobil.domain.model
+package pe.edu.upeu.pharmamobil.producto.domain.model
 
 data class Venta(
     val id: String,

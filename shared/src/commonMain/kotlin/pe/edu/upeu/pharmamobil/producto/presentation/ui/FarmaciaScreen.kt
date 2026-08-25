@@ -1,4 +1,4 @@
-package pe.edu.upeu.pharmamobil.presentation.ui
+package pe.edu.upeu.pharmamobil.producto.presentation.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +21,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -32,16 +33,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import pe.edu.upeu.pharmamobil.domain.model.Medicamento
 import pe.edu.upeu.pharmamobil.formatearPrecio
 import pe.edu.upeu.pharmamobil.presentation.model.UiState
-import pe.edu.upeu.pharmamobil.presentation.viewmodel.FarmaciaViewModel
+import pe.edu.upeu.pharmamobil.producto.domain.model.Medicamento
+import pe.edu.upeu.pharmamobil.producto.presentation.viewmodel.ProductoViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FarmaciaScreen(
-    viewModel: FarmaciaViewModel = viewModel { FarmaciaViewModel() }
+    viewModel: ProductoViewModel,
+    onNavigateToRegistro: () -> Unit = {},
+    onNavigateToClientes: () -> Unit = {}
 ) {
     val medicamentosState by viewModel.medicamentosState.collectAsState()
     val ventaState by viewModel.ventaState.collectAsState()
@@ -76,7 +78,15 @@ fun FarmaciaScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                ),
+                actions = {
+                    TextButton(onClick = onNavigateToClientes) {
+                        Text("Clientes")
+                    }
+                    TextButton(onClick = onNavigateToRegistro) {
+                        Text("+ Registrar")
+                    }
+                }
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }

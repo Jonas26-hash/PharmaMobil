@@ -1,4 +1,4 @@
-package pe.edu.upeu.pharmamobil.presentation.viewmodel
+package pe.edu.upeu.pharmamobil.producto.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -6,17 +6,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import pe.edu.upeu.pharmamobil.data.repository.FarmaciaRepositoryImpl
-import pe.edu.upeu.pharmamobil.domain.model.Medicamento
-import pe.edu.upeu.pharmamobil.domain.model.Venta
-import pe.edu.upeu.pharmamobil.domain.repository.FarmaciaRepository
 import pe.edu.upeu.pharmamobil.presentation.model.UiState
+import pe.edu.upeu.pharmamobil.producto.data.repository.ProductoRepositoryImpl
+import pe.edu.upeu.pharmamobil.producto.domain.model.Medicamento
+import pe.edu.upeu.pharmamobil.producto.domain.model.Venta
+import pe.edu.upeu.pharmamobil.producto.domain.repository.ProductoRepository
 
-class FarmaciaViewModel(
-    private val repository: FarmaciaRepository = FarmaciaRepositoryImpl()
+class ProductoViewModel(
+    private val repository: ProductoRepository = ProductoRepositoryImpl()
 ) : ViewModel() {
 
     private val _medicamentosState = MutableStateFlow<UiState<List<Medicamento>>>(UiState.Loading)
@@ -24,6 +25,9 @@ class FarmaciaViewModel(
 
     private val _ventaState = MutableStateFlow<UiState<Venta>?>(null)
     val ventaState: StateFlow<UiState<Venta>?> = _ventaState.asStateFlow()
+
+    private val _registroState = MutableStateFlow<UiState<Medicamento>?>(null)
+    val registroState: StateFlow<UiState<Medicamento>?> = _registroState.asStateFlow()
 
     val medicamentos: StateFlow<List<Medicamento>> = repository.observarMedicamentos()
         .stateIn(
@@ -34,6 +38,14 @@ class FarmaciaViewModel(
 
     init {
         cargarMedicamentos()
+
+        repository.observarMedicamentos()
+            .onEach { lista ->
+                if (lista.isNotEmpty()) {
+                    _medicamentosState.value = UiState.Success(lista)
+                }
+            }
+            .launchIn(viewModelScope)
     }
 
     fun cargarMedicamentos() {
@@ -74,5 +86,39 @@ class FarmaciaViewModel(
 
     fun limpiarEstadoVenta() {
         _ventaState.value = null
+    }
+
+    fun registrarMedicamento(
+        nombre: String,
+        descripcion: String?,
+        precio: Double,
+        stock: Int,
+        requiereReceta: Boolean,
+        categoria: String
+    ) {
+        viewModelScope.launch {
+            _registroState.value = UiState.Loading
+            try {
+                val medicamento = repository.registrarMedicamento(
+                    nombre = nombre,
+                    descripcion = descripcion,
+                    precio = precio,
+                    stock = stock,
+                    requiereReceta = requiereReceta,
+                    categoria = categoria
+                )
+                _registroState.value = UiState.Success(medicamento)
+            } catch (e: IllegalArgumentException) {
+                _registroState.value = UiState.Error(e.message ?: "Error al registrar")
+            } catch (e: Exception) {
+                _registroState.value = UiState.Error(
+                    e.message ?: "Error desconocido al registrar medicamento"
+                )
+            }
+        }
+    }
+
+    fun limpiarEstadoRegistro() {
+        _registroState.value = null
     }
 }
