@@ -55,10 +55,11 @@ fun RegistroMedicamentoScreen(
     var requiereReceta by remember { mutableStateOf(false) }
     var categoria by remember { mutableStateOf("") }
 
+    var intentoRegistro by remember { mutableStateOf(false) }
+
     var nombreError by remember { mutableStateOf<String?>(null) }
     var precioError by remember { mutableStateOf<String?>(null) }
     var stockError by remember { mutableStateOf<String?>(null) }
-    var categoriaError by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(registroState) {
         val state = registroState
@@ -72,6 +73,10 @@ fun RegistroMedicamentoScreen(
             stock = ""
             requiereReceta = false
             categoria = ""
+            intentoRegistro = false
+            nombreError = null
+            precioError = null
+            stockError = null
             viewModel.limpiarEstadoRegistro()
         } else if (state is UiState.Error) {
             snackbarHostState.showSnackbar(message = state.message)
@@ -79,50 +84,42 @@ fun RegistroMedicamentoScreen(
         }
     }
 
-    fun validar(): Boolean {
-        var valido = true
-
+    fun validar(): Pair<Double, Int>? {
+        // 1. Validar nombre (vacío o solo espacios)
         nombreError = if (nombre.isBlank()) {
-            valido = false
-            "El nombre es obligatorio"
+            "El nombre es obligatorio."
         } else {
             null
         }
+        if (nombreError != null) return null
 
-        precioError = if (precio.isBlank()) {
-            valido = false
-            "El precio es obligatorio"
-        } else {
-            val valor = precio.toDoubleOrNull()
-            if (valor == null || valor < 0) {
-                valido = false
-                "Ingrese un precio válido"
-            } else {
-                null
-            }
-        }
-
-        stockError = if (stock.isBlank()) {
-            valido = false
-            "El stock es obligatorio"
-        } else {
-            val valor = stock.toIntOrNull()
-            if (valor == null || valor < 0) {
-                valido = false
-                "Ingrese un stock válido"
-            } else {
-                null
-            }
-        }
-
-        categoriaError = if (categoria.isBlank()) {
-            valido = false
-            "La categoría es obligatoria"
+        // 2. Convertir precio de forma segura
+        val precioConvertido = precio.toDoubleOrNull()
+        // 3. Validar que precio > 0
+        precioError = if (precioConvertido == null) {
+            "Ingresa un precio numérico."
+        } else if (precioConvertido <= 0.0) {
+            "El precio debe ser mayor que cero."
         } else {
             null
         }
+        if (precioError != null) return null
 
-        return valido
+        // 4. Convertir stock de forma segura
+        val stockConvertido = stock.toIntOrNull()
+        // 5. Validar que stock >= 0 (0 es un stock válido)
+        stockError = if (stockConvertido == null) {
+            "Ingresa un stock entero."
+        } else if (stockConvertido < 0) {
+            "El stock no puede ser negativo."
+        } else {
+            null
+        }
+        if (stockError != null) return null
+
+        // 6. Solo tras pasar todas las validaciones se devuelven los valores convertidos
+        // (los valores por defecto del ?: nunca se usan porque ya se validó que no son null)
+        return (precioConvertido ?: 0.0) to (stockConvertido ?: 0)
     }
 
     Scaffold(
@@ -171,9 +168,11 @@ fun RegistroMedicamentoScreen(
                 },
                 label = { Text("Nombre *") },
                 placeholder = { Text("Ej: Paracetamol") },
-                isError = nombreError != null,
+                isError = intentoRegistro && nombreError != null,
                 supportingText = {
-                    nombreError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    if (intentoRegistro) {
+                        nombreError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
@@ -197,9 +196,11 @@ fun RegistroMedicamentoScreen(
                 },
                 label = { Text("Precio *") },
                 placeholder = { Text("Ej: 5.50") },
-                isError = precioError != null,
+                isError = intentoRegistro && precioError != null,
                 supportingText = {
-                    precioError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    if (intentoRegistro) {
+                        precioError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -214,9 +215,11 @@ fun RegistroMedicamentoScreen(
                 },
                 label = { Text("Stock *") },
                 placeholder = { Text("Ej: 20") },
-                isError = stockError != null,
+                isError = intentoRegistro && stockError != null,
                 supportingText = {
-                    stockError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    if (intentoRegistro) {
+                        stockError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    }
                 },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -225,16 +228,9 @@ fun RegistroMedicamentoScreen(
 
             OutlinedTextField(
                 value = categoria,
-                onValueChange = {
-                    categoria = it
-                    categoriaError = null
-                },
-                label = { Text("Categoría *") },
+                onValueChange = { categoria = it },
+                label = { Text("Categoría") },
                 placeholder = { Text("Ej: Analgésico") },
-                isError = categoriaError != null,
-                supportingText = {
-                    categoriaError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -258,14 +254,16 @@ fun RegistroMedicamentoScreen(
 
             Button(
                 onClick = {
-                    if (validar()) {
+                    intentoRegistro = true
+                    val valores = validar()
+                    if (valores != null) {
                         viewModel.registrarMedicamento(
-                            nombre = nombre,
+                            nombre = nombre.trim(),
                             descripcion = descripcion.ifBlank { null },
-                            precio = precio.toDouble(),
-                            stock = stock.toInt(),
+                            precio = valores.first,
+                            stock = valores.second,
                             requiereReceta = requiereReceta,
-                            categoria = categoria
+                            categoria = categoria.trim()
                         )
                     }
                 },
