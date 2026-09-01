@@ -342,4 +342,4 @@ PharmaMobil/
 
 ---
 
-Proyecto académico desarrollado para la Universidad Privada de los Andes - UPEU.
+Proyecto académico - UPEU.
