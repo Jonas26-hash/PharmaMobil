@@ -1,6 +1,7 @@
 package pe.edu.upeu.pharmamobil.producto.presentation.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,17 +14,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -36,14 +32,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import pe.edu.upeu.pharmamobil.presentation.components.ValidatedTextField
 import pe.edu.upeu.pharmamobil.presentation.model.UiState
+import pe.edu.upeu.pharmamobil.producto.presentation.ProductoValidator
 import pe.edu.upeu.pharmamobil.producto.presentation.viewmodel.ProductoViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistroMedicamentoScreen(
-    viewModel: ProductoViewModel,
-    onNavigateBack: () -> Unit
+    viewModel: ProductoViewModel
 ) {
     val registroState by viewModel.registroState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -86,68 +82,24 @@ fun RegistroMedicamentoScreen(
 
     fun validar(): Pair<Double, Int>? {
         // 1. Validar nombre (vacío o solo espacios)
-        nombreError = if (nombre.isBlank()) {
-            "El nombre es obligatorio."
-        } else {
-            null
-        }
-        if (nombreError != null) return null
+        nombreError = ProductoValidator.validarNombre(nombre)
+        // 2/3. Convertir precio de forma segura y validar que sea > 0
+        precioError = ProductoValidator.validarPrecio(precio)
+        // 4/5. Convertir stock de forma segura y validar que sea >= 0 (0 es válido)
+        stockError = ProductoValidator.validarStock(stock)
 
-        // 2. Convertir precio de forma segura
-        val precioConvertido = precio.toDoubleOrNull()
-        // 3. Validar que precio > 0
-        precioError = if (precioConvertido == null) {
-            "Ingresa un precio numérico."
-        } else if (precioConvertido <= 0.0) {
-            "El precio debe ser mayor que cero."
-        } else {
-            null
-        }
-        if (precioError != null) return null
+        if (nombreError != null || precioError != null || stockError != null) return null
 
-        // 4. Convertir stock de forma segura
-        val stockConvertido = stock.toIntOrNull()
-        // 5. Validar que stock >= 0 (0 es un stock válido)
-        stockError = if (stockConvertido == null) {
-            "Ingresa un stock entero."
-        } else if (stockConvertido < 0) {
-            "El stock no puede ser negativo."
-        } else {
-            null
-        }
-        if (stockError != null) return null
-
-        // 6. Solo tras pasar todas las validaciones se devuelven los valores convertidos
-        // (los valores por defecto del ?: nunca se usan porque ya se validó que no son null)
-        return (precioConvertido ?: 0.0) to (stockConvertido ?: 0)
+        // 6. Solo tras superar todas las validaciones se devuelven los valores convertidos
+        return (precio.toDoubleOrNull() ?: 0.0) to (stock.toIntOrNull() ?: 0)
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Registrar Medicamento",
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ),
-                navigationIcon = {
-                    TextButton(onClick = onNavigateBack) {
-                        Text("Volver")
-                    }
-                }
-            )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -160,22 +112,15 @@ fun RegistroMedicamentoScreen(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            OutlinedTextField(
+            ValidatedTextField(
                 value = nombre,
                 onValueChange = {
                     nombre = it
                     nombreError = null
                 },
-                label = { Text("Nombre *") },
-                placeholder = { Text("Ej: Paracetamol") },
-                isError = intentoRegistro && nombreError != null,
-                supportingText = {
-                    if (intentoRegistro) {
-                        nombreError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                label = "Nombre *",
+                placeholder = "Ej: Paracetamol",
+                error = if (intentoRegistro) nombreError else null
             )
 
             OutlinedTextField(
@@ -188,51 +133,36 @@ fun RegistroMedicamentoScreen(
                 maxLines = 4
             )
 
-            OutlinedTextField(
+            ValidatedTextField(
                 value = precio,
                 onValueChange = {
                     precio = it
                     precioError = null
                 },
-                label = { Text("Precio *") },
-                placeholder = { Text("Ej: 5.50") },
-                isError = intentoRegistro && precioError != null,
-                supportingText = {
-                    if (intentoRegistro) {
-                        precioError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
+                label = "Precio *",
+                placeholder = "Ej: 5.50",
+                error = if (intentoRegistro) precioError else null,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
 
-            OutlinedTextField(
+            ValidatedTextField(
                 value = stock,
                 onValueChange = {
                     stock = it
                     stockError = null
                 },
-                label = { Text("Stock *") },
-                placeholder = { Text("Ej: 20") },
-                isError = intentoRegistro && stockError != null,
-                supportingText = {
-                    if (intentoRegistro) {
-                        stockError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
+                label = "Stock *",
+                placeholder = "Ej: 20",
+                error = if (intentoRegistro) stockError else null,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
-            OutlinedTextField(
+            ValidatedTextField(
                 value = categoria,
                 onValueChange = { categoria = it },
-                label = { Text("Categoría") },
-                placeholder = { Text("Ej: Analgésico") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                label = "Categoría",
+                placeholder = "Ej: Analgésico",
+                error = null
             )
 
             Row(
@@ -280,5 +210,10 @@ fun RegistroMedicamentoScreen(
                 }
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
