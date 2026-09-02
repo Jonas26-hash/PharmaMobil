@@ -6,6 +6,7 @@ data class Medicamento(
     val descripcion: String?,
     val precio: Double,
     val stock: Int,
+    val activo: Boolean = true,
     val requiereReceta: Boolean,
     val categoria: String
 ) {

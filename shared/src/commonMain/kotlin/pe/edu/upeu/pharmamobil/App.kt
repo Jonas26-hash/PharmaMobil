@@ -2,6 +2,7 @@ package pe.edu.upeu.pharmamobil
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +23,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.PermanentDrawerSheet
+import androidx.compose.material3.PermanentNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -35,6 +40,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
@@ -49,6 +55,25 @@ import pe.edu.upeu.pharmamobil.producto.presentation.ui.RegistroMedicamentoScree
 import pe.edu.upeu.pharmamobil.producto.presentation.viewmodel.ProductoViewModel
 import pe.edu.upeu.pharmamobil.theme.PharmaMobilTheme
 
+private enum class TipoNavegacion {
+    COMPACTA,
+    MEDIANA,
+    AMPLIA
+}
+
+private data class Destino(
+    val pantalla: Screen,
+    val titulo: String,
+    val icono: ImageVector
+)
+
+private val destinos = listOf(
+    Destino(Screen.Inicio, "Inicio", Icons.Default.Home),
+    Destino(Screen.Productos, "Productos", Icons.Default.Medication),
+    Destino(Screen.Clientes, "Clientes", Icons.Default.Person),
+    Destino(Screen.Pedidos, "Pedidos", Icons.Default.ShoppingCart)
+)
+
 @Composable
 fun App() {
     val productoViewModel = viewModel { ProductoViewModel() }
@@ -62,8 +87,6 @@ fun App() {
         mutableStateOf(false)
     }
 
-    // Sub-navegación dentro de las secciones Productos y Clientes:
-    // la lista y el formulario de registro son dos niveles de una misma sección.
     var mostrandoFormularioProducto by remember {
         mutableStateOf(false)
     }
@@ -78,233 +101,371 @@ fun App() {
 
     val scope = rememberCoroutineScope()
 
-    val enFormulario = (pantallaActual is Screen.Productos && mostrandoFormularioProducto) ||
-        (pantallaActual is Screen.Clientes && mostrandoFormularioCliente)
-
     PharmaMobilTheme(
         darkTheme = darkTheme
     ) {
 
-        ModalNavigationDrawer(
-            drawerState = drawerState,
+        BoxWithConstraints(
+            modifier = Modifier.fillMaxSize()
+        ) {
 
-            drawerContent = {
-                ModalDrawerSheet {
+            val tipo = when {
+                maxWidth < 600.dp -> TipoNavegacion.COMPACTA
+                maxWidth < 840.dp -> TipoNavegacion.MEDIANA
+                else -> TipoNavegacion.AMPLIA
+            }
 
-                    DrawerHeader()
+            val onSeleccionar: (Screen) -> Unit = { pantalla ->
+                pantallaActual = pantalla
+                mostrandoFormularioProducto = false
+                mostrandoFormularioCliente = false
+                scope.launch {
+                    drawerState.close()
+                }
+            }
 
-                    NavigationDrawerItem(
-                        label = {
-                            Text("Inicio")
-                        },
-                        selected = pantallaActual is Screen.Inicio,
-                        onClick = {
-                            pantallaActual = Screen.Inicio
-                            scope.launch {
-                                drawerState.close()
+            when (tipo) {
+
+                TipoNavegacion.COMPACTA -> {
+                    ModalNavigationDrawer(
+                        drawerState = drawerState,
+                        drawerContent = {
+                            ModalDrawerSheet {
+                                MenuNavegacion(
+                                    pantallaActual = pantallaActual,
+                                    darkTheme = darkTheme,
+                                    onSeleccionar = onSeleccionar,
+                                    onCambiarTema = { darkTheme = it }
+                                )
                             }
                         },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Default.Home,
-                                contentDescription = "Inicio"
-                            )
-                        }
-                    )
-
-                    NavigationDrawerItem(
-                        label = {
-                            Text("Productos")
-                        },
-                        selected = pantallaActual is Screen.Productos,
-                        onClick = {
-                            pantallaActual = Screen.Productos
-                            mostrandoFormularioProducto = false
-                            scope.launch {
-                                drawerState.close()
-                            }
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Default.Medication,
-                                contentDescription = "Productos"
-                            )
-                        }
-                    )
-
-                    NavigationDrawerItem(
-                        label = {
-                            Text("Clientes")
-                        },
-                        selected = pantallaActual is Screen.Clientes,
-                        onClick = {
-                            pantallaActual = Screen.Clientes
-                            mostrandoFormularioCliente = false
-                            scope.launch {
-                                drawerState.close()
-                            }
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Clientes"
-                            )
-                        }
-                    )
-
-                    NavigationDrawerItem(
-                        label = {
-                            Text("Pedidos")
-                        },
-                        selected = pantallaActual is Screen.Pedidos,
-                        onClick = {
-                            pantallaActual = Screen.Pedidos
-                            scope.launch {
-                                drawerState.close()
-                            }
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Default.ShoppingCart,
-                                contentDescription = "Pedidos"
-                            )
-                        }
-                    )
-
-                    Spacer(
-                        modifier = Modifier.padding(8.dp)
-                    )
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                horizontal = 16.dp,
-                                vertical = 12.dp
-                            ),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        modifier = Modifier.fillMaxSize()
                     ) {
+                        EstructuraPrincipal(
+                            pantallaActual = pantallaActual,
+                            mostrandoFormularioProducto = mostrandoFormularioProducto,
+                            mostrandoFormularioCliente = mostrandoFormularioCliente,
+                            mostrarBotonMenu = true,
+                            onAbrirMenu = {
+                                scope.launch {
+                                    drawerState.open()
+                                }
+                            },
+                            onVolverFormulario = {
+                                if (pantallaActual is Screen.Productos) {
+                                    mostrandoFormularioProducto = false
+                                } else {
+                                    mostrandoFormularioCliente = false
+                                }
+                            },
+                            onRegistrarProducto = { mostrandoFormularioProducto = true },
+                            onRegistrarCliente = { mostrandoFormularioCliente = true },
+                            onIrAProductos = {
+                                pantallaActual = Screen.Productos
+                                mostrandoFormularioProducto = false
+                            },
+                            onIrAClientes = {
+                                pantallaActual = Screen.Clientes
+                                mostrandoFormularioCliente = false
+                            },
+                            productoViewModel = productoViewModel,
+                            clienteViewModel = clienteViewModel
+                        )
+                    }
+                }
 
-                        Text(
-                            text = "Modo oscuro"
+                TipoNavegacion.MEDIANA -> {
+                    Row(
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        RailNavegacion(
+                            pantallaActual = pantallaActual,
+                            darkTheme = darkTheme,
+                            onSeleccionar = onSeleccionar,
+                            onCambiarTema = { darkTheme = it }
                         )
 
-                        Switch(
-                            checked = darkTheme,
-                            onCheckedChange = {
-                                darkTheme = it
+                        EstructuraPrincipal(
+                            pantallaActual = pantallaActual,
+                            mostrandoFormularioProducto = mostrandoFormularioProducto,
+                            mostrandoFormularioCliente = mostrandoFormularioCliente,
+                            mostrarBotonMenu = false,
+                            onAbrirMenu = {},
+                            onVolverFormulario = {
+                                if (pantallaActual is Screen.Productos) {
+                                    mostrandoFormularioProducto = false
+                                } else {
+                                    mostrandoFormularioCliente = false
+                                }
+                            },
+                            onRegistrarProducto = { mostrandoFormularioProducto = true },
+                            onRegistrarCliente = { mostrandoFormularioCliente = true },
+                            onIrAProductos = {
+                                pantallaActual = Screen.Productos
+                                mostrandoFormularioProducto = false
+                            },
+                            onIrAClientes = {
+                                pantallaActual = Screen.Clientes
+                                mostrandoFormularioCliente = false
+                            },
+                            productoViewModel = productoViewModel,
+                            clienteViewModel = clienteViewModel,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                TipoNavegacion.AMPLIA -> {
+                    PermanentNavigationDrawer(
+                        drawerContent = {
+                            PermanentDrawerSheet {
+                                MenuNavegacion(
+                                    pantallaActual = pantallaActual,
+                                    darkTheme = darkTheme,
+                                    onSeleccionar = onSeleccionar,
+                                    onCambiarTema = { darkTheme = it }
+                                )
                             }
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        EstructuraPrincipal(
+                            pantallaActual = pantallaActual,
+                            mostrandoFormularioProducto = mostrandoFormularioProducto,
+                            mostrandoFormularioCliente = mostrandoFormularioCliente,
+                            mostrarBotonMenu = false,
+                            onAbrirMenu = {},
+                            onVolverFormulario = {
+                                if (pantallaActual is Screen.Productos) {
+                                    mostrandoFormularioProducto = false
+                                } else {
+                                    mostrandoFormularioCliente = false
+                                }
+                            },
+                            onRegistrarProducto = { mostrandoFormularioProducto = true },
+                            onRegistrarCliente = { mostrandoFormularioCliente = true },
+                            onIrAProductos = {
+                                pantallaActual = Screen.Productos
+                                mostrandoFormularioProducto = false
+                            },
+                            onIrAClientes = {
+                                pantallaActual = Screen.Clientes
+                                mostrandoFormularioCliente = false
+                            },
+                            productoViewModel = productoViewModel,
+                            clienteViewModel = clienteViewModel
                         )
                     }
                 }
             }
-        ) {
+        }
+    }
+}
 
-            Scaffold(
-                topBar = {
+@Composable
+private fun MenuNavegacion(
+    pantallaActual: Screen,
+    darkTheme: Boolean,
+    onSeleccionar: (Screen) -> Unit,
+    onCambiarTema: (Boolean) -> Unit
+) {
 
-                    TopAppBar(
-                        title = {
-                            Text(
-                                text = tituloPantalla(
-                                    pantallaActual,
-                                    mostrandoFormularioProducto,
-                                    mostrandoFormularioCliente
-                                )
-                            )
-                        },
-                        navigationIcon = {
-                            if (enFormulario) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
 
-                                IconButton(
-                                    onClick = {
-                                        if (pantallaActual is Screen.Productos) {
-                                            mostrandoFormularioProducto = false
-                                        } else {
-                                            mostrandoFormularioCliente = false
-                                        }
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Volver"
-                                    )
-                                }
-                            } else {
+        DrawerHeader()
 
-                                IconButton(
-                                    onClick = {
-                                        scope.launch {
-                                            drawerState.open()
-                                        }
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Menu,
-                                        contentDescription = "Abrir menú"
-                                    )
-                                }
-                            }
-                        }
+        destinos.forEach { destino ->
+            NavigationDrawerItem(
+                label = {
+                    Text(destino.titulo)
+                },
+                selected = pantallaActual == destino.pantalla,
+                onClick = {
+                    onSeleccionar(destino.pantalla)
+                },
+                icon = {
+                    Icon(
+                        imageVector = destino.icono,
+                        contentDescription = destino.titulo
                     )
                 }
-            ) { paddingValues ->
+            )
+        }
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                ) {
+        Spacer(
+            modifier = Modifier.padding(8.dp)
+        )
 
-                    when (pantallaActual) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 12.dp
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
 
-                        Screen.Inicio -> {
-                            InicioScreen()
+            Text(
+                text = "Modo oscuro"
+            )
+
+            Switch(
+                checked = darkTheme,
+                onCheckedChange = onCambiarTema
+            )
+        }
+    }
+}
+
+@Composable
+private fun RailNavegacion(
+    pantallaActual: Screen,
+    darkTheme: Boolean,
+    onSeleccionar: (Screen) -> Unit,
+    onCambiarTema: (Boolean) -> Unit
+) {
+
+    NavigationRail {
+
+        destinos.forEach { destino ->
+            NavigationRailItem(
+                selected = pantallaActual == destino.pantalla,
+                onClick = {
+                    onSeleccionar(destino.pantalla)
+                },
+                icon = {
+                    Icon(
+                        imageVector = destino.icono,
+                        contentDescription = destino.titulo
+                    )
+                },
+                label = {
+                    Text(destino.titulo)
+                }
+            )
+        }
+
+        Spacer(
+            modifier = Modifier
+                .padding(8.dp)
+                .weight(1f)
+        )
+
+        Switch(
+            checked = darkTheme,
+            onCheckedChange = onCambiarTema,
+            modifier = Modifier.padding(vertical = 12.dp)
+        )
+    }
+}
+
+@Composable
+private fun EstructuraPrincipal(
+    pantallaActual: Screen,
+    mostrandoFormularioProducto: Boolean,
+    mostrandoFormularioCliente: Boolean,
+    mostrarBotonMenu: Boolean,
+    onAbrirMenu: () -> Unit,
+    onVolverFormulario: () -> Unit,
+    onRegistrarProducto: () -> Unit,
+    onRegistrarCliente: () -> Unit,
+    onIrAProductos: () -> Unit,
+    onIrAClientes: () -> Unit,
+    productoViewModel: ProductoViewModel,
+    clienteViewModel: ClienteViewModel,
+    modifier: Modifier = Modifier
+) {
+
+    val enFormulario = (pantallaActual is Screen.Productos && mostrandoFormularioProducto) ||
+        (pantallaActual is Screen.Clientes && mostrandoFormularioCliente)
+
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+
+            TopAppBar(
+                title = {
+                    Text(
+                        text = tituloPantalla(
+                            pantallaActual,
+                            mostrandoFormularioProducto,
+                            mostrandoFormularioCliente
+                        )
+                    )
+                },
+                navigationIcon = {
+                    if (enFormulario) {
+
+                        IconButton(
+                            onClick = onVolverFormulario
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Volver"
+                            )
                         }
+                    } else if (mostrarBotonMenu) {
 
-                        Screen.Productos -> {
-                            if (mostrandoFormularioProducto) {
-                                RegistroMedicamentoScreen(
-                                    viewModel = productoViewModel
-                                )
-                            } else {
-                                FarmaciaScreen(
-                                    viewModel = productoViewModel,
-                                    onNavigateToRegistro = {
-                                        mostrandoFormularioProducto = true
-                                    },
-                                    onNavigateToClientes = {
-                                        pantallaActual = Screen.Clientes
-                                        mostrandoFormularioCliente = false
-                                    }
-                                )
-                            }
-                        }
-
-                        Screen.Clientes -> {
-                            if (mostrandoFormularioCliente) {
-                                RegistroClienteScreen(
-                                    viewModel = clienteViewModel
-                                )
-                            } else {
-                                ClienteScreen(
-                                    viewModel = clienteViewModel,
-                                    onNavigateToRegistro = {
-                                        mostrandoFormularioCliente = true
-                                    },
-                                    onNavigateToListaMedicamentos = {
-                                        pantallaActual = Screen.Productos
-                                        mostrandoFormularioProducto = false
-                                    }
-                                )
-                            }
-                        }
-
-                        Screen.Pedidos -> {
-                            PedidosScreen()
+                        IconButton(
+                            onClick = onAbrirMenu
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Abrir menú"
+                            )
                         }
                     }
+                }
+            )
+        }
+    ) { paddingValues ->
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+
+            when (pantallaActual) {
+
+                Screen.Inicio -> {
+                    InicioScreen()
+                }
+
+                Screen.Productos -> {
+                    if (mostrandoFormularioProducto) {
+                        RegistroMedicamentoScreen(
+                            viewModel = productoViewModel
+                        )
+                    } else {
+                        FarmaciaScreen(
+                            viewModel = productoViewModel,
+                            onNavigateToRegistro = onRegistrarProducto,
+                            onNavigateToClientes = onIrAClientes
+                        )
+                    }
+                }
+
+                Screen.Clientes -> {
+                    if (mostrandoFormularioCliente) {
+                        RegistroClienteScreen(
+                            viewModel = clienteViewModel
+                        )
+                    } else {
+                        ClienteScreen(
+                            viewModel = clienteViewModel,
+                            onNavigateToRegistro = onRegistrarCliente,
+                            onNavigateToListaMedicamentos = onIrAProductos
+                        )
+                    }
+                }
+
+                Screen.Pedidos -> {
+                    PedidosScreen()
                 }
             }
         }

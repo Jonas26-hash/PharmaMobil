@@ -95,6 +95,7 @@ class ProductoRepositoryImpl : ProductoRepository {
             descripcion = descripcion?.trim(),
             precio = precio,
             stock = stock,
+            activo = true,
             requiereReceta = requiereReceta,
             categoria = categoria.trim()
         )
@@ -116,8 +117,9 @@ class ProductoRepositoryImpl : ProductoRepository {
                 id = "MED-001",
                 nombre = "Paracetamol",
                 descripcion = "Analgésico y antipirético. Alivia el dolor de cabeza y reduce la fiebre.",
-                precio = 2.50,
-                stock = 20,
+                precio = 15.50,
+                stock = 100,
+                activo = true,
                 requiereReceta = false,
                 categoria = "Analgésico"
             ),
@@ -125,8 +127,9 @@ class ProductoRepositoryImpl : ProductoRepository {
                 id = "MED-002",
                 nombre = "Ibuprofeno",
                 descripcion = "Antiinflamatorio no esteroideo. Reduce inflamación y dolor.",
-                precio = 3.25,
-                stock = 15,
+                precio = 18.90,
+                stock = 50,
+                activo = true,
                 requiereReceta = false,
                 categoria = "Antiinflamatorio"
             ),
@@ -134,8 +137,9 @@ class ProductoRepositoryImpl : ProductoRepository {
                 id = "MED-003",
                 nombre = "Amoxicilina",
                 descripcion = "Antibiótico de amplio espectro para infecciones bacterianas.",
-                precio = 8.50,
-                stock = 10,
+                precio = 25.00,
+                stock = 5,
+                activo = true,
                 requiereReceta = true,
                 categoria = "Antibiótico"
             ),
@@ -143,26 +147,39 @@ class ProductoRepositoryImpl : ProductoRepository {
                 id = "MED-004",
                 nombre = "Loratadina",
                 descripcion = "Antihistamínico para aliviar síntomas de alergia.",
-                precio = 4.00,
-                stock = 25,
+                precio = 12.50,
+                stock = 0,
+                activo = false,
                 requiereReceta = false,
                 categoria = "Antihistamínico"
             ),
             Medicamento(
                 id = "MED-005",
+                nombre = "Diclofenaco",
+                descripcion = "Antiinflamatorio para el alivio de dolores musculares y articulares.",
+                precio = 20.00,
+                stock = 3,
+                activo = true,
+                requiereReceta = false,
+                categoria = "Antiinflamatorio"
+            ),
+            Medicamento(
+                id = "MED-006",
                 nombre = "Omeprazol",
                 descripcion = "Inhibidor de la bomba de protones para problemas gástricos.",
                 precio = 5.75,
                 stock = 18,
+                activo = true,
                 requiereReceta = false,
                 categoria = "Gastrointestinal"
             ),
             Medicamento(
-                id = "MED-006",
+                id = "MED-007",
                 nombre = "Vitamina C",
                 descripcion = "Suplemento vitamínico para reforzar el sistema inmunológico.",
                 precio = 6.00,
                 stock = 30,
+                activo = true,
                 requiereReceta = false,
                 categoria = "Suplemento"
             )

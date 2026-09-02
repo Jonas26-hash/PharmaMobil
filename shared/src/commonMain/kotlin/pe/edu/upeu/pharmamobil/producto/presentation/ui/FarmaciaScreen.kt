@@ -11,27 +11,37 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import pe.edu.upeu.pharmamobil.formatearPrecio
 import pe.edu.upeu.pharmamobil.presentation.model.UiState
 import pe.edu.upeu.pharmamobil.producto.domain.model.Medicamento
+import pe.edu.upeu.pharmamobil.producto.presentation.TabInventario
 import pe.edu.upeu.pharmamobil.producto.presentation.viewmodel.ProductoViewModel
 
 @Composable
@@ -43,6 +53,10 @@ fun FarmaciaScreen(
     val medicamentosState by viewModel.medicamentosState.collectAsState()
     val ventaState by viewModel.ventaState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    var tabSeleccionada by remember { mutableIntStateOf(0) }
+    val pagerState = rememberPagerState(pageCount = { TabInventario.entries.size })
 
     LaunchedEffect(ventaState) {
         val currentVenta = ventaState
@@ -59,6 +73,10 @@ fun FarmaciaScreen(
             )
             viewModel.limpiarEstadoVenta()
         }
+    }
+
+    LaunchedEffect(pagerState.currentPage) {
+        tabSeleccionada = pagerState.currentPage
     }
 
     Box(
@@ -90,6 +108,26 @@ fun FarmaciaScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            PrimaryScrollableTabRow(
+                selectedTabIndex = tabSeleccionada,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                TabInventario.entries.forEachIndexed { index, tab ->
+                    Tab(
+                        selected = tabSeleccionada == index,
+                        onClick = {
+                            tabSeleccionada = index
+                            scope.launch {
+                                pagerState.animateScrollToPage(index)
+                            }
+                        },
+                        text = { Text(tab.titulo) }
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(12.dp))
 
             when (val state = medicamentosState) {
@@ -107,16 +145,38 @@ fun FarmaciaScreen(
                 }
 
                 is UiState.Success -> {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(state.data) { medicamento ->
-                            MedicamentoCard(
-                                medicamento = medicamento,
-                                onVenderClick = {
-                                    viewModel.venderMedicamento(medicamento.id)
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize()
+                    ) { page ->
+                        val tab = TabInventario.entries[page]
+                        val productosFiltrados = tab.filtrar(state.data)
+
+                        if (productosFiltrados.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "No hay productos en \"${tab.titulo}\"",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                items(productosFiltrados) { medicamento ->
+                                    MedicamentoCard(
+                                        medicamento = medicamento,
+                                        onVenderClick = {
+                                            viewModel.venderMedicamento(medicamento.id)
+                                        }
+                                    )
                                 }
-                            )
+                            }
                         }
                     }
                 }
@@ -178,12 +238,21 @@ fun MedicamentoCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold
                 )
-                if (medicamento.requiereReceta) {
-                    Text(
-                        text = "Requiere receta",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.error
-                    )
+                Column(horizontalAlignment = Alignment.End) {
+                    if (medicamento.requiereReceta) {
+                        Text(
+                            text = "Requiere receta",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    if (!medicamento.activo) {
+                        Text(
+                            text = "Inactivo",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 
