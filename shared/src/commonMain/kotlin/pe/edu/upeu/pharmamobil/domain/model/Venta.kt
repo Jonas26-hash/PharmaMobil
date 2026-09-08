@@ -1,4 +1,4 @@
-package pe.edu.upeu.pharmamobil.producto.domain.model
+package pe.edu.upeu.pharmamobil.domain.model
 
 data class Venta(
     val id: String,
@@ -8,12 +8,11 @@ data class Venta(
 ) {
     companion object {
         fun crear(id: String, fecha: String, items: List<DetalleVenta>): Venta {
-            val totalCalculado = items.sumOf { it.subtotal }
             return Venta(
                 id = id,
                 fecha = fecha,
                 items = items,
-                total = totalCalculado
+                total = items.sumOf { it.subtotal }
             )
         }
     }

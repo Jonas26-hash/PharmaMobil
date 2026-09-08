@@ -1,22 +1,22 @@
-package pe.edu.upeu.pharmamobil.producto.domain.model
+package pe.edu.upeu.pharmamobil.domain.model
 
 data class DetalleVenta(
-    val medicamentoId: String,
-    val nombreMedicamento: String,
+    val productoId: Long,
+    val nombreProducto: String,
     val cantidad: Int,
     val precioUnitario: Double,
     val subtotal: Double
 ) {
     companion object {
         fun crear(
-            medicamentoId: String,
-            nombreMedicamento: String,
+            productoId: Long,
+            nombreProducto: String,
             cantidad: Int,
             precioUnitario: Double
         ): DetalleVenta {
             return DetalleVenta(
-                medicamentoId = medicamentoId,
-                nombreMedicamento = nombreMedicamento,
+                productoId = productoId,
+                nombreProducto = nombreProducto,
                 cantidad = cantidad,
                 precioUnitario = precioUnitario,
                 subtotal = cantidad * precioUnitario
