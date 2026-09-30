@@ -12,65 +12,78 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CloudOff
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pe.edu.upeu.pharmamobil.presentation.components.EstadoVacio
-import pe.edu.upeu.pharmamobil.presentation.components.MensajeExito
-import pe.edu.upeu.pharmamobil.presentation.components.ValidatedTextField
 
 @Composable
 fun ClienteScreen(
     viewModel: ClienteViewModel,
+    onRegistrarClick: () -> Unit,
+    onEditarClick: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        viewModel.cargarClientes()
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 
-        FormularioClienteCard(
-            formulario = uiState.formulario,
-            registrando = uiState.registrando,
-            onNombreChange = viewModel::onNombreChange,
-            onApellidoChange = viewModel::onApellidoChange,
-            onDniChange = viewModel::onDniChange,
-            onTelefonoChange = viewModel::onTelefonoChange,
-            onEmailChange = viewModel::onEmailChange,
-            onDireccionChange = viewModel::onDireccionChange,
-            onRegistrar = viewModel::registrar
+        EncabezadoCartera(uiState.fase)
+
+        OutlinedTextField(
+            value = uiState.busqueda,
+            onValueChange = viewModel::onBusquedaChange,
+            label = { Text("Buscar cliente") },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = null
+                )
+            },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
         )
 
-        uiState.mensajeExito?.let {
-            MensajeExito(it)
+        Button(
+            onClick = onRegistrarClick,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null
+            )
+            Text("Registrar cliente")
         }
-
-        EncabezadoCartera(uiState.fase)
 
         Box(
             modifier = Modifier
@@ -100,21 +113,36 @@ fun ClienteScreen(
                     EstadoVacio(
                         icono = Icons.Default.Group,
                         titulo = "Todavía no hay clientes",
-                        descripcion = "Registra el primero con el formulario de arriba.",
+                        descripcion = "Pulsa \"Registrar cliente\" para guardar el primero.",
                         modifier = Modifier.align(Alignment.Center)
                     )
 
-                is ClienteUiState.Fase.ConClientes ->
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(
-                            items = fase.clientes,
-                            key = { it.id }
-                        ) { cliente ->
-                            ClienteItem(cliente)
+                is ClienteUiState.Fase.ConClientes -> {
+                    val filtrados = uiState.filtrarPorBusqueda()
+
+                    if (filtrados.isEmpty()) {
+                        EstadoVacio(
+                            icono = Icons.Default.Search,
+                            titulo = "Sin resultados",
+                            descripcion = "Ningún cliente coincide con la búsqueda.",
+                            modifier = Modifier.align(Alignment.Center)
+                        )
+                    } else {
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(
+                                items = filtrados,
+                                key = { it.id }
+                            ) { cliente ->
+                                ClienteItem(
+                                    cliente = cliente,
+                                    onClick = { onEditarClick(cliente.id) }
+                                )
+                            }
                         }
                     }
+                }
 
                 is ClienteUiState.Fase.Error ->
                     EstadoVacio(
@@ -135,110 +163,12 @@ fun ClienteScreen(
 }
 
 @Composable
-private fun FormularioClienteCard(
-    formulario: FormularioCliente,
-    registrando: Boolean,
-    onNombreChange: (String) -> Unit,
-    onApellidoChange: (String) -> Unit,
-    onDniChange: (String) -> Unit,
-    onTelefonoChange: (String) -> Unit,
-    onEmailChange: (String) -> Unit,
-    onDireccionChange: (String) -> Unit,
-    onRegistrar: () -> Unit
-) {
-
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-
-            Text(
-                text = "Registrar cliente",
-                style = MaterialTheme.typography.titleMedium
-            )
-
-            ValidatedTextField(
-                value = formulario.nombre,
-                onValueChange = onNombreChange,
-                label = "Nombre",
-                error = formulario.nombreError,
-                leadingIcon = Icons.Default.Person,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            ValidatedTextField(
-                value = formulario.apellido,
-                onValueChange = onApellidoChange,
-                label = "Apellido",
-                error = formulario.apellidoError,
-                leadingIcon = Icons.Default.Badge,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            ValidatedTextField(
-                value = formulario.dni,
-                onValueChange = onDniChange,
-                label = "DNI",
-                error = formulario.dniError,
-                ayuda = "8 dígitos",
-                keyboardType = KeyboardType.Number,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            ValidatedTextField(
-                value = formulario.email,
-                onValueChange = onEmailChange,
-                label = "Correo",
-                error = formulario.emailError,
-                leadingIcon = Icons.Default.Email,
-                keyboardType = KeyboardType.Email,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            ValidatedTextField(
-                value = formulario.telefono,
-                onValueChange = onTelefonoChange,
-                label = "Teléfono",
-                error = formulario.telefonoError,
-                leadingIcon = Icons.Default.Phone,
-                ayuda = "Opcional, entre 6 y 9 dígitos",
-                keyboardType = KeyboardType.Phone,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            ValidatedTextField(
-                value = formulario.direccion,
-                onValueChange = onDireccionChange,
-                label = "Dirección",
-                error = null,
-                leadingIcon = Icons.Default.LocationOn,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Button(
-                onClick = onRegistrar,
-                enabled = !registrando,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(if (registrando) "Registrando…" else "Registrar")
-            }
-        }
-    }
-}
-
-@Composable
 private fun EncabezadoCartera(
     fase: ClienteUiState.Fase
 ) {
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 12.dp),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
 
@@ -263,10 +193,12 @@ private fun EncabezadoCartera(
 
 @Composable
 private fun ClienteItem(
-    cliente: ClienteUi
+    cliente: ClienteUi,
+    onClick: () -> Unit
 ) {
 
     Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth()
     ) {
 
@@ -308,22 +240,34 @@ private fun ClienteItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                if (cliente.email.isNotBlank()) {
-                    Text(
-                        text = cliente.email,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
 
-                if (cliente.direccion.isNotBlank()) {
-                    Text(
-                        text = cliente.direccion,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    if (!cliente.activo) {
+
+                        Surface(
+                            shape = MaterialTheme.shapes.small,
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        ) {
+
+                            Text(
+                                text = "Inactivo",
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.padding(
+                                    horizontal = 8.dp,
+                                    vertical = 4.dp
+                                )
+                            )
+                        }
+                    }
                 }
             }
+
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = "Editar ${cliente.nombreCompleto}",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

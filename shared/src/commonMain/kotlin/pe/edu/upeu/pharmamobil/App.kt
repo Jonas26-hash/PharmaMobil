@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LocalPharmacy
@@ -38,8 +39,8 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,13 +51,18 @@ import kotlinx.coroutines.launch
 import org.koin.compose.KoinContext
 import org.koin.compose.viewmodel.koinViewModel
 import pe.edu.upeu.pharmamobil.navigation.Screen
+import pe.edu.upeu.pharmamobil.presentation.cliente.ClienteFormScreen
+import pe.edu.upeu.pharmamobil.presentation.cliente.ClienteFormViewModel
 import pe.edu.upeu.pharmamobil.presentation.cliente.ClienteScreen
+import pe.edu.upeu.pharmamobil.presentation.cliente.ClienteViewModel
 import pe.edu.upeu.pharmamobil.presentation.components.EstadoVacio
 import pe.edu.upeu.pharmamobil.presentation.inicio.InicioScreen
+import pe.edu.upeu.pharmamobil.presentation.producto.ProductoFormScreen
+import pe.edu.upeu.pharmamobil.presentation.producto.ProductoFormViewModel
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoScreen
+import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
 import pe.edu.upeu.pharmamobil.theme.PharmaMobilTheme
 
-/** Una sola fuente para el menú lateral y el título de la barra superior. */
 private data class Destino(
     val screen: Screen,
     val titulo: String,
@@ -70,19 +76,10 @@ private val DESTINOS = listOf(
     Destino(Screen.Pedidos, "Pedidos", Icons.Default.ShoppingCart)
 )
 
-private val ScreenSaver = Saver<Screen, Int>(
-    save = { pantalla ->
-        DESTINOS.indexOfFirst { it.screen == pantalla }
-    },
-    restore = { indice ->
-        DESTINOS[indice].screen
-    }
-)
-
 @Composable
 fun App() = KoinContext {
 
-    var pantallaActual by rememberSaveable(stateSaver = ScreenSaver) {
+    var pantallaActual by remember {
         mutableStateOf<Screen>(Screen.Inicio)
     }
 
@@ -95,6 +92,9 @@ fun App() = KoinContext {
     )
 
     val scope = rememberCoroutineScope()
+
+    val esFormulario = pantallaActual is Screen.RegistrarProducto ||
+        pantallaActual is Screen.RegistrarCliente
 
     PharmaMobilTheme(
         darkTheme = darkTheme
@@ -122,7 +122,7 @@ fun App() = KoinContext {
                             label = {
                                 Text(destino.titulo)
                             },
-                            selected = pantallaActual == destino.screen,
+                            selected = seccionDe(pantallaActual) == destino.screen,
                             onClick = {
 
                                 pantallaActual = destino.screen
@@ -174,16 +174,27 @@ fun App() = KoinContext {
                             IconButton(
                                 onClick = {
 
-                                    scope.launch {
-
-                                        drawerState.open()
+                                    if (esFormulario) {
+                                        pantallaActual = seccionDe(pantallaActual)
+                                    } else {
+                                        scope.launch {
+                                            drawerState.open()
+                                        }
                                     }
                                 }
                             ) {
 
                                 Icon(
-                                    imageVector = Icons.Default.Menu,
-                                    contentDescription = "Abrir menú"
+                                    imageVector = if (esFormulario) {
+                                        Icons.AutoMirrored.Filled.ArrowBack
+                                    } else {
+                                        Icons.Default.Menu
+                                    },
+                                    contentDescription = if (esFormulario) {
+                                        "Volver"
+                                    } else {
+                                        "Abrir menú"
+                                    }
                                 )
                             }
                         },
@@ -204,7 +215,7 @@ fun App() = KoinContext {
                         .padding(paddingValues)
                 ) {
 
-                    when (pantallaActual) {
+                    when (val pantalla = pantallaActual) {
 
                         Screen.Inicio ->
                             InicioScreen(
@@ -213,12 +224,24 @@ fun App() = KoinContext {
 
                         Screen.Productos ->
                             ProductoScreen(
-                                viewModel = koinViewModel()
+                                viewModel = koinViewModel<ProductoViewModel>(),
+                                onRegistrarClick = {
+                                    pantallaActual = Screen.RegistrarProducto()
+                                },
+                                onEditarClick = { productoId ->
+                                    pantallaActual = Screen.RegistrarProducto(productoId)
+                                }
                             )
 
                         Screen.Clientes ->
                             ClienteScreen(
-                                viewModel = koinViewModel()
+                                viewModel = koinViewModel<ClienteViewModel>(),
+                                onRegistrarClick = {
+                                    pantallaActual = Screen.RegistrarCliente()
+                                },
+                                onEditarClick = { clienteId ->
+                                    pantallaActual = Screen.RegistrarCliente(clienteId)
+                                }
                             )
 
                         Screen.Pedidos ->
@@ -228,11 +251,36 @@ fun App() = KoinContext {
                                 descripcion = "Este módulo llega en una próxima sesión del curso.",
                                 modifier = Modifier.align(Alignment.Center)
                             )
+
+                        is Screen.RegistrarProducto ->
+                            ProductoFormScreen(
+                                viewModel = koinViewModel<ProductoFormViewModel>(),
+                                productoId = pantalla.productoId,
+                                onGuardado = {
+                                    pantallaActual = Screen.Productos
+                                }
+                            )
+
+                        is Screen.RegistrarCliente ->
+                            ClienteFormScreen(
+                                viewModel = koinViewModel<ClienteFormViewModel>(),
+                                clienteId = pantalla.clienteId,
+                                onGuardado = {
+                                    pantallaActual = Screen.Clientes
+                                }
+                            )
                     }
                 }
             }
         }
     }
+}
+
+/** A qué sección del menú pertenece una pantalla (formularios incluidos). */
+private fun seccionDe(screen: Screen): Screen = when (screen) {
+    is Screen.RegistrarProducto -> Screen.Productos
+    is Screen.RegistrarCliente -> Screen.Clientes
+    else -> screen
 }
 
 @Composable
@@ -316,5 +364,13 @@ private fun tituloDe(
     screen: Screen
 ): String {
 
-    return DESTINOS.first { it.screen == screen }.titulo
+    return when (screen) {
+        is Screen.RegistrarProducto ->
+            if (screen.productoId == null) "Registrar producto" else "Editar producto"
+
+        is Screen.RegistrarCliente ->
+            if (screen.clienteId == null) "Registrar cliente" else "Editar cliente"
+
+        else -> DESTINOS.first { it.screen == screen }.titulo
+    }
 }

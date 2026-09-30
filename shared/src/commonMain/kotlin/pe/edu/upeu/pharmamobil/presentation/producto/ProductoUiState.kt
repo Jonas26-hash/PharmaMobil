@@ -1,14 +1,14 @@
 package pe.edu.upeu.pharmamobil.presentation.producto
 
+/**
+ * Listado del inventario: fases excluyentes (solo una puede estar activa) más
+ * el texto de búsqueda, que filtra en la misma pantalla.
+ */
 data class ProductoUiState(
     val fase: Fase = Fase.Cargando,
-    val formulario: FormularioProducto = FormularioProducto(),
-    val registrando: Boolean = false,
-    val mensajeExito: String? = null,
-    val mensaje: String? = null
+    val busqueda: String = ""
 ) {
 
-    /** Fases excluyentes del inventario: solo una puede estar activa. */
     sealed interface Fase {
 
         data object Cargando : Fase
@@ -19,16 +19,10 @@ data class ProductoUiState(
 
         data class Error(val mensaje: String) : Fase
     }
-}
 
-data class FormularioProducto(
-    val nombre: String = "",
-    val descripcion: String = "",
-    val precio: String = "",
-    val stock: String = "",
-    val categoria: String = "",
-    val requiereReceta: Boolean = false,
-    val nombreError: String? = null,
-    val precioError: String? = null,
-    val stockError: String? = null
-)
+    /** Aplica el filtro de texto sobre la lista cargada. */
+    fun filtrarPorBusqueda(): List<ProductoUi> {
+        return (fase as? Fase.ConProductos)?.productos.orEmpty()
+            .filter { it.nombre.contains(busqueda.trim(), ignoreCase = true) }
+    }
+}

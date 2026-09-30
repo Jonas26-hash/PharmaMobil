@@ -8,7 +8,8 @@ data class ClienteUi(
     val dni: String,
     val telefono: String,
     val email: String,
-    val direccion: String
+    val direccion: String,
+    val activo: Boolean
 )
 
 fun Cliente.aUi(): ClienteUi = ClienteUi(
@@ -17,7 +18,8 @@ fun Cliente.aUi(): ClienteUi = ClienteUi(
     dni = dni,
     telefono = telefono ?: TELEFONO_AUSENTE,
     email = email ?: "",
-    direccion = direccion ?: ""
+    direccion = direccion ?: "",
+    activo = activo
 )
 
 const val TELEFONO_AUSENTE = "No registrado"

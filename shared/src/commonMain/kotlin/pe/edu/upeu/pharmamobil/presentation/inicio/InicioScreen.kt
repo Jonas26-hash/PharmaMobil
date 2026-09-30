@@ -56,15 +56,15 @@ fun InicioScreen(
 
         AccesoRapido(
             icono = Icons.Default.Medication,
-            titulo = "Registrar productos",
-            descripcion = "Da de alta medicamentos con su precio y su stock.",
+            titulo = "Gestionar productos",
+            descripcion = "Mantén el inventario: crea, edita y elimina medicamentos.",
             onClick = { onNavegar(Screen.Productos) }
         )
 
         AccesoRapido(
             icono = Icons.Default.Person,
-            titulo = "Registrar clientes",
-            descripcion = "Guarda los datos de contacto para la boleta.",
+            titulo = "Gestionar clientes",
+            descripcion = "Mantén la cartera: crea, edita y elimina clientes.",
             onClick = { onNavegar(Screen.Clientes) }
         )
 
