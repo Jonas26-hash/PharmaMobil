@@ -29,6 +29,10 @@ jobs:
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # En Windows el bit de ejecucion no importa, pero Ubuntu runner lo exige.
+      - name: Dar permisos de ejecucion al wrapper
+        run: chmod +x ./gradlew
+
       - name: Tests unitarios
         run: ./gradlew :shared:testAndroidHostTest --console=plain
 
