@@ -26,8 +26,12 @@ class ClienteRepositorioRemoto(
         api.eliminar(clienteId)
     }
 
+    /**
+     * Igual que en productos, el backend ignora el filtro `?estado=`, así que
+     * se descartan aquí los clientes dados de baja (`DELETE` es baja lógica).
+     */
     override suspend fun listar(): List<Cliente> = alAplicacion {
-        api.listar().map { it.aDominio() }
+        api.listar().map { it.aDominio() }.filter { it.activo }
     }
 
     override suspend fun obtenerPorId(clienteId: Long): Cliente = alAplicacion {
