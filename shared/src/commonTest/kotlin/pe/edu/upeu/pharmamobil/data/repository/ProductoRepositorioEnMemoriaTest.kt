@@ -59,7 +59,7 @@ class ProductoRepositorioEnMemoriaTest {
 
         val repositorio = ProductoRepositorioEnMemoria()
 
-        repositorio.registrarVenta(productoId = 1L, cantidad = 1)
+        repositorio.registrarVenta(clienteId = 1L, productoId = 1L, cantidad = 1)
 
         val paracetamol = repositorio.listar().first { it.id == 1L }
         assertEquals(99, paracetamol.stock)
@@ -70,7 +70,7 @@ class ProductoRepositorioEnMemoriaTest {
 
         val repositorio = ProductoRepositorioEnMemoria()
 
-        val venta = repositorio.registrarVenta(productoId = 1L, cantidad = 2)
+        val venta = repositorio.registrarVenta(clienteId = 1L, productoId = 1L, cantidad = 2)
 
         assertEquals(2 * 15.50, venta.total, 0.0001)
     }
@@ -81,7 +81,7 @@ class ProductoRepositorioEnMemoriaTest {
         val repositorio = ProductoRepositorioEnMemoria()
 
         val fallo = assertFailsWith<IllegalArgumentException> {
-            repositorio.registrarVenta(productoId = 1L, cantidad = 1000)
+            repositorio.registrarVenta(clienteId = 1L, productoId = 1L, cantidad = 1000)
         }
 
         assertTrue(fallo.message!!.startsWith("Stock insuficiente"))
@@ -93,7 +93,7 @@ class ProductoRepositorioEnMemoriaTest {
         val repositorio = ProductoRepositorioEnMemoria()
 
         assertFailsWith<IllegalArgumentException> {
-            repositorio.registrarVenta(productoId = 1L, cantidad = 0)
+            repositorio.registrarVenta(clienteId = 1L, productoId = 1L, cantidad = 0)
         }
     }
 }

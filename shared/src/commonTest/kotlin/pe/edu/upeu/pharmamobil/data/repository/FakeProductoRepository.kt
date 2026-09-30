@@ -17,7 +17,10 @@ class FakeProductoRepository(
 ) : ProductoRepository {
 
     var fallaAlRegistrar: Throwable? = null
+    var fallaAlActualizar: Throwable? = null
+    var fallaAlEliminar: Throwable? = null
     var fallaAlListar: Throwable? = null
+    var fallaAlObtenerPorId: Throwable? = null
     var fallaAlVender: Throwable? = null
 
     private var siguienteId = 1L
@@ -31,6 +34,24 @@ class FakeProductoRepository(
         return guardado
     }
 
+    override suspend fun actualizar(producto: Producto): Producto {
+
+        fallaAlActualizar?.let { throw it }
+
+        val indice = productos.indexOfFirst { it.id == producto.id }
+        if (indice < 0) {
+            throw NoSuchElementException("Producto no encontrado con id: ${producto.id}")
+        }
+
+        productos[indice] = producto
+        return producto
+    }
+
+    override suspend fun eliminar(productoId: Long) {
+        fallaAlEliminar?.let { throw it }
+        productos.removeAll { it.id == productoId }
+    }
+
     override suspend fun listar(): List<Producto> {
 
         fallaAlListar?.let { throw it }
@@ -38,7 +59,19 @@ class FakeProductoRepository(
         return productos.toList()
     }
 
-    override suspend fun registrarVenta(productoId: Long, cantidad: Int): Venta {
+    override suspend fun obtenerPorId(productoId: Long): Producto {
+
+        fallaAlObtenerPorId?.let { throw it }
+
+        return productos.find { it.id == productoId }
+            ?: throw NoSuchElementException("Producto no encontrado con id: $productoId")
+    }
+
+    override suspend fun registrarVenta(
+        clienteId: Long,
+        productoId: Long,
+        cantidad: Int
+    ): Venta {
 
         fallaAlVender?.let { throw it }
 

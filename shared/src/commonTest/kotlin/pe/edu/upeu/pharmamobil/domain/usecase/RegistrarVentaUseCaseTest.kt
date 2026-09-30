@@ -18,7 +18,7 @@ class RegistrarVentaUseCaseTest {
         )
 
         val venta = RegistrarVentaUseCase(repositorio)
-            .invoke(productoId = 1L, cantidad = 1)
+            .invoke(clienteId = 1L, productoId = 1L, cantidad = 1)
             .getOrThrow()
 
         assertEquals("Paracetamol", venta.items.single().nombreProducto)
@@ -33,7 +33,7 @@ class RegistrarVentaUseCaseTest {
         }
 
         val resultado = RegistrarVentaUseCase(repositorio)
-            .invoke(productoId = 1L, cantidad = 1)
+            .invoke(clienteId = 1L, productoId = 1L, cantidad = 1)
 
         assertEquals("Sin conexión", resultado.exceptionOrNull()?.message)
     }
