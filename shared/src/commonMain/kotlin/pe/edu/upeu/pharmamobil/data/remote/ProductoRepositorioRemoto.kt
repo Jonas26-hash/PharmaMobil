@@ -29,8 +29,14 @@ class ProductoRepositorioRemoto(
         api.eliminar(productoId)
     }
 
+    /**
+     * El backend no filtra por `estado`: `GET /productos` devuelve también los
+     * desactivados y el parámetro `?estado=` se ignora. Como `DELETE` es una
+     * baja lógica (`estado = false`), se filtra aquí para que el inventario
+     * que ve el usuario no muestre lo que ya dio de baja.
+     */
     override suspend fun listar(): List<Producto> = alAplicacion {
-        api.listar().map { it.aDominio() }
+        api.listar().map { it.aDominio() }.filter { it.activo }
     }
 
     override suspend fun obtenerPorId(productoId: Long): Producto = alAplicacion {
