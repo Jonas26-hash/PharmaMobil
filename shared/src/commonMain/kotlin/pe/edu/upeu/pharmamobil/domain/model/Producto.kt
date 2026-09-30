@@ -14,6 +14,7 @@ data class Producto(
     val stock: Int,
     val requiereReceta: Boolean = false,
     val categoria: String = "",
+    val categoriaId: Long? = null,
     val activo: Boolean = true
 ) {
     init {

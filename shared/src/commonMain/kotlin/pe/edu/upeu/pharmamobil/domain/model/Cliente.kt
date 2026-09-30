@@ -12,7 +12,8 @@ data class Cliente(
     val dni: String,
     val telefono: String? = null,
     val email: String? = null,
-    val direccion: String? = null
+    val direccion: String? = null,
+    val activo: Boolean = true
 ) {
     init {
         require(nombre.isNotBlank()) {

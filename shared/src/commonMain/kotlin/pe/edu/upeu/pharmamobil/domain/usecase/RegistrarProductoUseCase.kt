@@ -6,11 +6,12 @@ import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
 data class ErroresDeProducto(
     val nombre: String? = null,
     val precio: String? = null,
-    val stock: String? = null
+    val stock: String? = null,
+    val categoria: String? = null
 ) {
 
     val hayErrores: Boolean
-        get() = nombre != null || precio != null || stock != null
+        get() = nombre != null || precio != null || stock != null || categoria != null
 }
 
 class ProductoInvalidoException(
@@ -18,9 +19,13 @@ class ProductoInvalidoException(
 ) : IllegalArgumentException("Los datos del producto no cumplen las reglas del negocio")
 
 /**
- * Registra un producto en el inventario. Concentra la validación (antes
- * repartida entre la pantalla y el repositorio) en el dominio; la pantalla
- * solo muestra los errores que esta devuelve.
+ * Registra un producto en el inventario contra el backend REST. Concentra la
+ * validación (antes repartida entre la pantalla y el repositorio) en el
+ * dominio; la pantalla solo muestra los errores que esta devuelve.
+ *
+ * Los campos que el backend no acepta (descripcion, requiereReceta) salen
+ * del formulario: la identidad del producto la define nombre, precio, stock,
+ * estado y la categoría, que es un id real del catálogo del servidor.
  */
 class RegistrarProductoUseCase(
     private val productoRepository: ProductoRepository
@@ -28,17 +33,17 @@ class RegistrarProductoUseCase(
 
     suspend operator fun invoke(
         nombre: String,
-        descripcion: String?,
         precio: String,
         stock: String,
-        requiereReceta: Boolean,
-        categoria: String
+        estado: Boolean,
+        categoriaId: Long
     ): Result<Producto> {
 
         val errores = ErroresDeProducto(
-            nombre = validarNombre(nombre),
-            precio = validarPrecio(precio),
-            stock = validarStock(stock)
+            nombre = ValidacionesProducto.nombre(nombre),
+            precio = ValidacionesProducto.precio(precio),
+            stock = ValidacionesProducto.stock(stock),
+            categoria = validarCategoria(categoriaId)
         )
 
         if (errores.hayErrores) {
@@ -50,35 +55,16 @@ class RegistrarProductoUseCase(
                 Producto(
                     id = 0L,
                     nombre = nombre.trim(),
-                    descripcion = descripcion?.trim(),
                     precio = precio.toDouble(),
                     stock = stock.toInt(),
-                    requiereReceta = requiereReceta,
-                    categoria = categoria.trim()
+                    categoriaId = categoriaId,
+                    activo = estado
                 )
             )
         }
     }
 
-    private fun validarNombre(nombre: String): String? {
-        return if (nombre.isBlank()) "El nombre es obligatorio." else null
-    }
-
-    private fun validarPrecio(precio: String): String? {
-        val precioValor = precio.toDoubleOrNull()
-        return when {
-            precioValor == null || !precioValor.isFinite() -> "Ingresa un precio numérico."
-            precioValor <= 0.0 -> "El precio debe ser mayor que cero."
-            else -> null
-        }
-    }
-
-    private fun validarStock(stock: String): String? {
-        val stockValor = stock.toIntOrNull()
-        return when {
-            stockValor == null -> "Ingresa un stock entero."
-            stockValor < 0 -> "El stock no puede ser negativo."
-            else -> null
-        }
+    private fun validarCategoria(categoriaId: Long): String? {
+        return if (categoriaId <= 0L) "Selecciona una categoría." else null
     }
 }

@@ -9,11 +9,20 @@ interface ProductoRepository {
     /** Incorpora el producto al inventario y devuelve el producto ya identificado. */
     suspend fun registrar(producto: Producto): Producto
 
-    /** Entrega el inventario completo en el orden en que fue registrado. */
+    /** Actualiza un producto existente y devuelve el producto modificado. */
+    suspend fun actualizar(producto: Producto): Producto
+
+    /** Da de baja física un producto del inventario. */
+    suspend fun eliminar(productoId: Long)
+
+    /** Entrega el inventario completo. */
     suspend fun listar(): List<Producto>
 
-    /** Corta una venta: descuenta stock y devuelve la venta con su total. */
-    suspend fun registrarVenta(productoId: Long, cantidad: Int): Venta
+    /** Entrega un producto puntual del inventario. */
+    suspend fun obtenerPorId(productoId: Long): Producto
+
+    /** Corta una venta a un cliente: descuenta stock y devuelve la venta con su total. */
+    suspend fun registrarVenta(clienteId: Long, productoId: Long, cantidad: Int): Venta
 
     /** Reacciona a los cambios del inventario (registro, venta, …). */
     fun observarProductos(): Flow<List<Producto>>
