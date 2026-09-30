@@ -197,8 +197,27 @@ Endpoints que consume la app:
 ## Pruebas
 
 - `commonTest` cubre modelos, validaciones, casos de uso (éxito y error), repositorios en memoria, fakes, los cuatro ViewModels, el filtro de los listados, el formato de precio, los mappers DTO ↔ dominio, las cuatro APIs con `MockEngine` y el grafo de Koin completo.
-- Ejecución: `./gradlew :shared:testAndroidHostTest` (**115 casos, 0 fallos**).
+- Ejecución: `./gradlew :shared:testAndroidHostTest` (**118 casos, 0 fallos**).
 - Las pruebas de red no salen a internet: `crearHttpClient(MockEngine { … })` reproduce las respuestas y comprueba rutas, verbos, query de paginación y cuerpo JSON.
+- `ListadoDeActivosTest` fija el comportamiento de la baja lógica: `DELETE` devuelve 204 pero el registro queda con `estado = false`, así que el repositorio filtra los desactivados al listar.
+
+### Verificación contra el backend real
+
+Comprobado con `pharmaSoft` (Oracle 23ai en Docker) y la app instalada en un dispositivo Android físico:
+
+| Caso | Resultado |
+|------|-----------|
+| `GET /api/health` | 200 |
+| `GET /api/v1/productos` | 200, devuelve solo los activos tras el filtro |
+| `GET /api/v1/productos/{id}` | 200 con el objeto simple |
+| `GET /api/v1/productos/99999` | 404, la app muestra «No se encontró el recurso» |
+| `GET /api/v1/productos/abc` | 400 por parámetro inválido |
+| `POST /api/v1/productos` | 201 con el id asignado por el servidor |
+| `PUT /api/v1/productos/{id}` | 200 con los campos actualizados |
+| `DELETE /api/v1/productos/{id}` | 204 y el registro queda con `estado = false` |
+| Alta, edición y baja desde la app | El contador pasó de 2 a 1 cliente y la lista se actualizó |
+
+> Nota sobre el contrato: `DELETE` es una **baja lógica**. El registro no desaparece de la base, y el backend ignora el parámetro `?estado=`, por eso el filtrado de los inactivos se hace en el repositorio del cliente.
 
 ## Cómo ejecutar
 
