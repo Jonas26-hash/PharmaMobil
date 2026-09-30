@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    El backend pharmaSoft se ejecuta en la máquina del desarrollador y habla
+    HTTP sin cifrar. Android 9 (API 28) bloquea el tráfico en claro por
+    defecto, así que sin este permiso el cliente Ktor fallaría con
+    "CLEARTEXT communication not permitted" antes de salir a la red.
+
+    Se autoriza de forma explícita y solo mientras la app se usa contra el
+    backend local de desarrollo. Un despliegue real usaría HTTPS y este
+    archivo podría eliminarse.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
