@@ -33,10 +33,46 @@ class ClienteRepositorioEnMemoria : ClienteRepository {
         }
     }
 
+    override suspend fun actualizar(cliente: Cliente): Cliente {
+        delay(RETARDO_REGISTRO_MS)
+        return candado.withLock {
+            val lista = _clientes.value
+            if (lista.none { it.id == cliente.id }) {
+                throw NoSuchElementException("Cliente no encontrado con id: ${cliente.id}")
+            }
+            val dniDuplicado = lista.any {
+                it.id != cliente.id && it.dni == cliente.dni
+            }
+            if (dniDuplicado) {
+                throw IllegalArgumentException("Ya existe un cliente con el DNI: ${cliente.dni}")
+            }
+
+            _clientes.update { listaActual ->
+                listaActual.map { if (it.id == cliente.id) cliente else it }
+            }
+            cliente
+        }
+    }
+
+    override suspend fun eliminar(clienteId: Long) {
+        delay(RETARDO_LISTADO_MS)
+        candado.withLock {
+            _clientes.update { lista -> lista.filterNot { it.id == clienteId } }
+        }
+    }
+
     override suspend fun listar(): List<Cliente> {
         delay(RETARDO_LISTADO_MS)
         return candado.withLock {
             _clientes.value
+        }
+    }
+
+    override suspend fun obtenerPorId(clienteId: Long): Cliente {
+        delay(RETARDO_LISTADO_MS)
+        return candado.withLock {
+            _clientes.value.find { it.id == clienteId }
+                ?: throw NoSuchElementException("Cliente no encontrado con id: $clienteId")
         }
     }
 
