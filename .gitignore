@@ -8,6 +8,12 @@ local.properties
 .idea
 .DS_Store
 captures
+# Capturas de pantalla: no se versionan, solo los informes .md
+*.png
+*.jpg
+*.jpeg
+*.apk
+*.aab
 .externalNativeBuild
 .cxx
 *.xcodeproj/*

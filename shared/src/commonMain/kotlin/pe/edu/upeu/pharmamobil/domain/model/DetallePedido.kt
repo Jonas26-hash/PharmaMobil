@@ -1,9 +1,7 @@
 package pe.edu.upeu.pharmamobil.domain.model
 
-import pe.edu.upeu.pharmamobil.producto.domain.model.Medicamento
-
 data class DetallePedido(
-    val medicamento: Medicamento,
+    val producto: Producto,
     val cantidad: Int
 ) {
     init {
@@ -13,6 +11,6 @@ data class DetallePedido(
     }
 
     fun subtotal(): Double {
-        return medicamento.precio * cantidad
+        return producto.precio * cantidad
     }
 }
