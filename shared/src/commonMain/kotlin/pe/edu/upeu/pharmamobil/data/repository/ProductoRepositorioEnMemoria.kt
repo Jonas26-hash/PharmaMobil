@@ -47,6 +47,34 @@ class ProductoRepositorioEnMemoria : ProductoRepository {
         }
     }
 
+    override suspend fun actualizar(producto: Producto): Producto {
+        delay(RETARDO_REGISTRO_MS)
+        return candado.withLock {
+            val lista = _productos.value
+            if (lista.none { it.id == producto.id }) {
+                throw NoSuchElementException("Producto no encontrado con id: ${producto.id}")
+            }
+            val nombreDuplicado = lista.any {
+                it.id != producto.id && it.nombre.equals(producto.nombre, ignoreCase = true)
+            }
+            if (nombreDuplicado) {
+                throw IllegalArgumentException("Ya existe un producto con el nombre: ${producto.nombre}")
+            }
+
+            _productos.update { listaActual ->
+                listaActual.map { if (it.id == producto.id) producto else it }
+            }
+            producto
+        }
+    }
+
+    override suspend fun eliminar(productoId: Long) {
+        delay(RETARDO_LISTADO_MS)
+        candado.withLock {
+            _productos.update { lista -> lista.filterNot { it.id == productoId } }
+        }
+    }
+
     override suspend fun listar(): List<Producto> {
         delay(RETARDO_LISTADO_MS)
         return candado.withLock {
@@ -54,7 +82,15 @@ class ProductoRepositorioEnMemoria : ProductoRepository {
         }
     }
 
-    override suspend fun registrarVenta(productoId: Long, cantidad: Int): Venta {
+    override suspend fun obtenerPorId(productoId: Long): Producto {
+        delay(RETARDO_LISTADO_MS)
+        return candado.withLock {
+            _productos.value.find { it.id == productoId }
+                ?: throw NoSuchElementException("Producto no encontrado con id: $productoId")
+        }
+    }
+
+    override suspend fun registrarVenta(clienteId: Long, productoId: Long, cantidad: Int): Venta {
         delay(RETARDO_VENTA_MS)
 
         if (cantidad <= 0) {
