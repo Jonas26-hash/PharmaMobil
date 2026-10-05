@@ -73,6 +73,24 @@ data class PaginaResponseDto<T>(
     val ultima: Boolean = true
 )
 
+/**
+ * Cuerpo de error que devuelve `GlobalExceptionHandler` de pharmaSoft.
+ *
+ * Refleja su `ErrorResponseDTO`. `validationErrors` solo viene informado
+ * cuando el fallo procede de `MethodArgumentNotValidException` o de un
+ * parámetro inválido, y entonces contiene el detalle por campo con el nombre
+ * del atributo de Java: `nombre`, `precio`, `stock`, `categoriaId`.
+ */
+@Serializable
+data class ErrorResponseDto(
+    val timestamp: String? = null,
+    val status: Int? = null,
+    val error: String? = null,
+    val message: String? = null,
+    val path: String? = null,
+    val validationErrors: Map<String, String>? = null
+)
+
 @Serializable
 data class VentaRequestDto(
     val clienteId: Long,

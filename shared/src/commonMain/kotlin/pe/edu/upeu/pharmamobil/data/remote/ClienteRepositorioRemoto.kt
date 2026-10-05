@@ -1,4 +1,4 @@
-package pe.edu.upeu.pharmamobil.data.remote
+﻿package pe.edu.upeu.pharmamobil.data.remote
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -8,7 +8,7 @@ import pe.edu.upeu.pharmamobil.domain.repository.ClienteRepository
 /**
  * Cartera servida por el backend REST. Gemelo de [ProductoRepositorioRemoto]:
  * implementa la interfaz de dominio y traduce los fallos de red a
- * [pe.edu.upeu.pharmamobil.domain.ErrorDeAplicacion].
+ * [pe.edu.upeu.pharmamobil.domain.ErrorApi].
  */
 class ClienteRepositorioRemoto(
     private val api: ClienteApi
@@ -27,8 +27,8 @@ class ClienteRepositorioRemoto(
     }
 
     /**
-     * Igual que en productos, el backend ignora el filtro `?estado=`, así que
-     * se descartan aquí los clientes dados de baja (`DELETE` es baja lógica).
+     * Igual que en productos, el backend ignora el filtro `?estado=`, asÃ­ que
+     * se descartan aquÃ­ los clientes dados de baja (`DELETE` es baja lÃ³gica).
      */
     override suspend fun listar(): List<Cliente> = alAplicacion {
         api.listar().map { it.aDominio() }.filter { it.activo }
