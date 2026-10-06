@@ -122,7 +122,7 @@ class ProductoFormViewModelTest {
 
         val estado = viewModel.uiState.value
 
-        assertEquals("El nombre es obligatorio.", estado.formulario.nombreError)
+        assertEquals("El nombre del producto es obligatorio", estado.formulario.nombreError)
         assertEquals("Ingresa un precio numérico.", estado.formulario.precioError)
         assertEquals("El stock no puede ser negativo.", estado.formulario.stockError)
         assertNull(estado.mensajeExito)

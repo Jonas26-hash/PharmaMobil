@@ -121,7 +121,7 @@ class RegistrarProductoUseCaseTest {
     @Test
     fun rechazaPrecioCero() = runTest {
         assertEquals(
-            "El precio debe ser mayor que cero.",
+            "El precio debe ser mayor que cero",
             erroresAlRegistrar(precio = "0").precio
         )
     }
@@ -145,8 +145,29 @@ class RegistrarProductoUseCaseTest {
     @Test
     fun rechazaNombreVacio() = runTest {
         assertEquals(
-            "El nombre es obligatorio.",
+            "El nombre del producto es obligatorio",
             erroresAlRegistrar(nombre = "   ").nombre
+        )
+    }
+
+    @Test
+    fun rechazaNombreCortoDeMenosDeTresCaracteres() = runTest {
+        assertEquals(
+            "El nombre debe tener entre 3 y 150 caracteres",
+            erroresAlRegistrar(nombre = "Ab").nombre
+        )
+    }
+
+    @Test
+    fun aceptaNombreDeExactamenteTresCaracteres() = runTest {
+        assertNull(ValidacionesProducto.nombre("Abc"))
+    }
+
+    @Test
+    fun rechazaNombreLargoDeMasDeCientoCincuentaCaracteres() = runTest {
+        assertEquals(
+            "El nombre debe tener entre 3 y 150 caracteres",
+            erroresAlRegistrar(nombre = "a".repeat(151)).nombre
         )
     }
 
@@ -155,7 +176,7 @@ class RegistrarProductoUseCaseTest {
 
         val errores = erroresAlRegistrar(nombre = "", precio = "", stock = "", categoriaId = 0L)
 
-        assertEquals("El nombre es obligatorio.", errores.nombre)
+        assertEquals("El nombre del producto es obligatorio", errores.nombre)
         assertEquals("Ingresa un precio numérico.", errores.precio)
         assertEquals("Ingresa un stock entero.", errores.stock)
         assertEquals("Selecciona una categoría.", errores.categoria)

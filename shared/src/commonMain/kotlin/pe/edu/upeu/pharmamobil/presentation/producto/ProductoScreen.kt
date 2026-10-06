@@ -62,6 +62,8 @@ fun ProductoScreen(
 
         EncabezadoInventario(uiState.fase)
 
+        AvisoOperacion(uiState.operacion)
+
         OutlinedTextField(
             value = uiState.busqueda,
             onValueChange = viewModel::onBusquedaChange,
@@ -160,6 +162,68 @@ fun ProductoScreen(
                         }
                     )
             }
+        }
+    }
+}
+
+/**
+ * Refleja el segundo eje del estado, la OPERACIÓN, mediante un `when` exhaustivo.
+ *
+ * La mutación en curso no bloquea la lista ni la devuelve a "cargando": solo
+ * informa qué se está haciendo. Si la mutación falló, muestra el mensaje real
+ * que devolvió el backend (404, 409, validación, sin conexión, timeout...).
+ */
+@Composable
+private fun AvisoOperacion(operacion: ProductoUiState.Operacion) {
+
+    val descripcion: String
+
+    when (operacion) {
+
+        ProductoUiState.Operacion.Inactiva ->
+            return
+
+        is ProductoUiState.Operacion.EnCurso ->
+            descripcion = "Guardando cambios…"
+
+        is ProductoUiState.Operacion.Fallida ->
+            descripcion = operacion.mensaje
+    }
+
+    val esFallo = operacion is ProductoUiState.Operacion.Fallida
+
+    Surface(
+        shape = MaterialTheme.shapes.small,
+        color = if (esFallo) {
+            MaterialTheme.colorScheme.errorContainer
+        } else {
+            MaterialTheme.colorScheme.secondaryContainer
+        },
+        contentColor = if (esFallo) {
+            MaterialTheme.colorScheme.onErrorContainer
+        } else {
+            MaterialTheme.colorScheme.onSecondaryContainer
+        },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+
+            if (!esFallo) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    strokeWidth = 2.dp
+                )
+            }
+
+            Text(
+                text = descripcion,
+                style = MaterialTheme.typography.bodySmall
+            )
         }
     }
 }
