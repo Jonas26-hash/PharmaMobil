@@ -19,11 +19,14 @@ class SesionTest {
         usuario = "admin",
         nombreCompleto = "Ada Admin",
         permisos = setOf(
-            Permisos.PRODUCTOS_LISTAR,
-            Permisos.PRODUCTOS_REGISTRAR,
-            Permisos.CLIENTES_LISTAR,
+            Permisos.CATALOGO_LEER,
+            Permisos.CATALOGO_ESCRIBIR,
+            Permisos.CLIENTES_LEER,
+            Permisos.CLIENTES_ESCRIBIR,
+            Permisos.VENTAS_LEER,
             Permisos.VENTAS_REGISTRAR,
-            Permisos.REPORTES_VER
+            Permisos.REPORTES_VER,
+            Permisos.USUARIOS_ADMINISTRAR
         )
     )
 
@@ -32,8 +35,8 @@ class SesionTest {
         usuario = "almacen",
         nombreCompleto = "Alma Almacenera",
         permisos = setOf(
-            Permisos.PRODUCTOS_LISTAR,
-            Permisos.PRODUCTOS_REGISTRAR
+            Permisos.CATALOGO_LEER,
+            Permisos.CATALOGO_ESCRIBIR
         )
     )
 
@@ -42,34 +45,37 @@ class SesionTest {
         usuario = "vendedor",
         nombreCompleto = "Vera Vendedora",
         permisos = setOf(
-            Permisos.CLIENTES_LISTAR,
+            Permisos.CATALOGO_LEER,
+            Permisos.CLIENTES_LEER,
+            Permisos.CLIENTES_ESCRIBIR,
+            Permisos.VENTAS_LEER,
             Permisos.VENTAS_REGISTRAR
         )
     )
 
     @Test
     fun adminPuedeHacerTodo() {
-        assertTrue(sesionAdmin.puede(Permisos.PRODUCTOS_LISTAR))
-        assertTrue(sesionAdmin.puede(Permisos.PRODUCTOS_REGISTRAR))
-        assertTrue(sesionAdmin.puede(Permisos.CLIENTES_LISTAR))
+        assertTrue(sesionAdmin.puede(Permisos.CATALOGO_LEER))
+        assertTrue(sesionAdmin.puede(Permisos.CATALOGO_ESCRIBIR))
+        assertTrue(sesionAdmin.puede(Permisos.CLIENTES_LEER))
         assertTrue(sesionAdmin.puede(Permisos.VENTAS_REGISTRAR))
         assertTrue(sesionAdmin.puede(Permisos.REPORTES_VER))
     }
 
     @Test
     fun almacenPuedeProductosPeroNoClientesNiVentas() {
-        assertTrue(sesionAlmacen.puede(Permisos.PRODUCTOS_LISTAR))
-        assertTrue(sesionAlmacen.puede(Permisos.PRODUCTOS_REGISTRAR))
-        assertFalse(sesionAlmacen.puede(Permisos.CLIENTES_LISTAR))
+        assertTrue(sesionAlmacen.puede(Permisos.CATALOGO_LEER))
+        assertTrue(sesionAlmacen.puede(Permisos.CATALOGO_ESCRIBIR))
+        assertFalse(sesionAlmacen.puede(Permisos.CLIENTES_LEER))
         assertFalse(sesionAlmacen.puede(Permisos.VENTAS_REGISTRAR))
         assertFalse(sesionAlmacen.puede(Permisos.REPORTES_VER))
     }
 
     @Test
     fun vendedorNoRegistraProductosNiVeReportes() {
-        assertFalse(sesionVendedor.puede(Permisos.PRODUCTOS_REGISTRAR))
+        assertFalse(sesionVendedor.puede(Permisos.CATALOGO_ESCRIBIR))
         assertFalse(sesionVendedor.puede(Permisos.REPORTES_VER))
-        assertTrue(sesionVendedor.puede(Permisos.CLIENTES_LISTAR))
+        assertTrue(sesionVendedor.puede(Permisos.CLIENTES_LEER))
     }
 
     @Test
@@ -89,7 +95,7 @@ class SesionTest {
         assertFalse(
             sesionAlmacen.puedeAlguno(
                 listOf(
-                    Permisos.CLIENTES_LISTAR,
+                    Permisos.CLIENTES_LEER,
                     Permisos.VENTAS_REGISTRAR
                 )
             )
@@ -108,7 +114,7 @@ class SesionTest {
             usuario = "anonimo",
             nombreCompleto = ""
         )
-        assertFalse(sesion.puede(Permisos.PRODUCTOS_LISTAR))
+        assertFalse(sesion.puede(Permisos.CATALOGO_LEER))
         assertFalse(sesion.puedeAlguno(setOf(Permisos.REPORTES_VER, Permisos.VENTAS_REGISTRAR)))
     }
 }

@@ -152,7 +152,7 @@ La app arranca en un **login** y solo muestra el contenido cuando hay una sesió
 
 1. `LoginViewModel` recibe usuario y contraseña y llama a `AuthRepository.iniciarSesion(Credenciales)`.
 2. `AuthRepositorioRemoto` hace `POST /auth/login`; si el 401 vuelve, se traduce a `CredencialesInvalidas` («Usuario o contraseña incorrectos»).
-3. Con la respuesta se construye el `Sesion(token, usuario, rol, permisos)` y se guarda el **token** en `AlmacenSeguro` (Keystore en Android, Keychain en iOS).
+3. Con la respuesta se construye el `Sesion(token, usuario, nombreCompleto, permisos)` y se guarda el **token** en `AlmacenSeguro` (Keystore en Android, Keychain en iOS).
 4. `GestorSesion` expone `StateFlow<Sesion?>`; `App.kt` lo observa y conmuta entre `LoginScreen` y `ContenidoAutenticado`.
 5. Al iniciar la app, `recuperarSesion()` lee el token del almacén y pide `GET /auth/me` para reconstruir la sesión (si el token caducó, vuelve al login).
 6. **Cerrar sesión** limpia la sesión en memoria y borra el token del almacén.
@@ -163,18 +163,29 @@ La app arranca en un **login** y solo muestra el contenido cuando hay una sesió
 
 - `install(Auth) { bearer { loadTokens { leerToken()?.let { BearerTokens(it, null) } }; refreshTokens { null } } }` adjunta el `Bearer` en cada petición.
 - `Logging` **oculta** la cabecera `Authorization` para no filtrar el token en los logs.
-- `HttpResponseValidator`: un **401** en una ruta que no sea `/auth/login` dispara `alExpirarSesion()` (la app vuelve al login); un **403** conserva la sesión y se muestra como «No tienes permisos para esta acción».
+- `HttpResponseValidator`: un **401** en una ruta que no sea `/auth/login` dispara `alExpirarSesion()` (la app vuelve al login); un **403** conserva la sesión y se muestra como «No tienes permisos para realizar esta operación».
 
 ### Permisos en la interfaz
 
 `Sesion.puede(permiso)` / `GestorSesion.puede(permiso)` filtran el menú y los botones:
 
-- El drawer solo muestra los destinos para los que el rol tiene permiso.
-- `ProductoScreen` y `ClienteScreen` reciben `puedeRegistrar`: si el rol no tiene `productos:registrar` / `clientes:registrar`, el botón de registro no aparece.
+- El drawer solo muestra los destinos para los que el rol tiene permiso: `Productos` requiere `CATALOGO_LEER` y `Clientes` requiere `CLIENTES_LEER`, así que el rol **ALMACENERO** no ve `Clientes`.
+- `ProductoScreen` recibe `puedeRegistrar = sesion.puede(Permisos.CATALOGO_ESCRIBIR)`: si el rol no puede escribir el catálogo, la UI oculta el botón de registro/edición.
 
-Los nombres de permiso (`productos:listar`, `productos:registrar`, `clientes:listar`, `clientes:registrar`, `pedidos:ver`) están centralizados en `domain/auth/Permisos.kt`.
+Los identificadores reales que emite el backend (`PermisosPorRol`) están centralizados en `domain/auth/Permisos.kt`:
 
-> **Alcance y limitación conocida:** el backend **pharmaSoft** (hasta la fecha de esta entrega) **no expone endpoints de autenticación** (`/auth/login`, `/auth/me`) ni roles. Por eso la integración se verificó **de extremo a extremo contra un servidor mock local** y con pruebas de red (`MockEngine`); los casos que dependen del backend real (login real, matriz de roles, caducidad/refresco de token) quedan marcados **PENDIENTE** en la evidencia de la sesión. El contrato REST de auth sigue la forma estándar `{ token, usuario, rol, permisos }` para que, cuando el backend lo implemente, la app solo cambie la URL.
+| Permiso | ADMIN | VENDEDOR | ALMACENERO |
+|---|---|---|---|
+| `CATALOGO_LEER` | sí | sí | sí |
+| `CATALOGO_ESCRIBIR` | sí | no | sí |
+| `CLIENTES_LEER` | sí | sí | no |
+| `CLIENTES_ESCRIBIR` | sí | sí | no |
+| `VENTAS_LEER` | sí | sí | no |
+| `VENTAS_REGISTRAR` | sí | sí | no |
+| `REPORTES_VER` | sí | no | no |
+| `USUARIOS_ADMINISTRAR` | sí | no | no |
+
+> **Estado de la integración (Sesión 10 cerrada):** el backend **pharmaSoft** implementa autenticación con **Spring Security + JWT**: `POST /api/v1/auth/login`, `GET /api/v1/auth/me`, tablas `empleados`/`usuarios` y roles `ADMIN`/`VENDEDOR`/`ALMACENERO` con la matriz de permisos de arriba. La app se verificó **de extremo a extremo contra el backend real** en un celular físico (vía `adb reverse`): login de los tres usuarios, `401` con credenciales inválidas, `403` por rol sin permiso y `Bearer` en peticiones protegidas. El token es un **JWT HS512** que caduca en 60 minutos. El contrato de `POST /auth/login` es `{ token, tipo, expiraEnSegundos, username, nombreCompleto, roles, permisos }` y el de `GET /auth/me` es `{ id, username, empleadoId, empleadoNombre, cargo, roles, permisos, estado, fechaCreacion }`.
 
 ## Inyección de dependencias (Koin)
 
@@ -218,7 +229,7 @@ mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=dev
 > .\gradlew :androidApp:installDebug -PpharmaApiBaseUrl=http://127.0.0.1:8080/api/v1
 > ```
 >
-> Es la forma recomendada con un teléfono real: evita depender de la IP de la red (que cambia) y de reglas del Firewall. Funciona igual con el backend real `pharmaSoft` o con el servidor mock de evidencia.
+> Es la forma recomendada con un teléfono real: evita depender de la IP de la red (que cambia) y de reglas del Firewall. Funciona con el backend real `pharmaSoft`.
 
 Para averiguar la IP local de la PC: `ipconfig`, sección del adaptador Wi-Fi.
 
@@ -241,8 +252,8 @@ Endpoints que consume la app:
 | POST/PUT/DELETE | `/clientes`, `/clientes/{id}` | Registro, actualización y baja |
 | GET | `/categorias` | Catálogo para el selector del formulario |
 | POST | `/ventas` | Venta (`{ clienteId, detalles: [{ productoId, cantidad }] }`) |
-| POST | `/auth/login` | Autenticación: devuelve `{ token, usuario, rol, permisos }` (contrato previsto; backend **PENDIENTE**) |
-| GET | `/auth/me` | Reconstruye la sesión desde el token (contrato previsto; backend **PENDIENTE**) |
+| POST | `/auth/login` | Autenticación: devuelve `{ token, tipo, expiraEnSegundos, username, nombreCompleto, roles, permisos }` |
+| GET | `/auth/me` | Reconstruye la sesión desde el token (`Bearer`): `{ id, username, empleadoId, empleadoNombre, cargo, roles, permisos, estado, fechaCreacion }` |
 
 ## Pruebas
 
@@ -268,6 +279,18 @@ Comprobado con `pharmaSoft` (Oracle 23ai en Docker) y la app instalada en un dis
 | `PUT /api/v1/productos/{id}` | 200 con los campos actualizados |
 | `DELETE /api/v1/productos/{id}` | 204 y el registro queda con `estado = false` |
 | Alta, edición y baja desde la app | El contador pasó de 2 a 1 cliente y la lista se actualizó |
+
+Autenticación (Sesión 10), verificada en el mismo celular físico con `adb reverse`:
+
+| Caso | Resultado |
+|------|-----------|
+| `POST /api/v1/auth/login` (`admin`/`Admin123`, `vendedor`/`Vendedor123`, `almacen`/`Almacen123`) | 200 con `{ token, tipo: "Bearer", expiraEnSegundos: 3600, username, nombreCompleto, roles, permisos }`; la app entra a **Inicio** |
+| `POST /api/v1/auth/login` (`admin` / incorrecta) | 401 «Usuario o contraseña incorrectos»; no se crea sesión |
+| `GET /api/v1/auth/me` con `Bearer` | 200 con `{ id, username, empleadoId, empleadoNombre, cargo, roles, permisos, estado, fechaCreacion }` |
+| `GET /api/v1/auth/me` sin token | 401 «Debe iniciar sesión para acceder a este recurso» |
+| `GET /api/v1/productos` con `Bearer` (vendedor) | 200; el listado carga con el token adjunto |
+| `GET /api/v1/reportes/productos-mas-vendidos` (rol vendedor) | 403 «No tienes permisos para realizar esta operación»; la UI oculta acciones no permitidas |
+| Drawer `Clientes` con rol `almacen` | Oculto: `almacen` no tiene `CLIENTES_LEER` |
 
 > Nota sobre el contrato: `DELETE` es una **baja lógica**. El registro no desaparece de la base, y el backend ignora el parámetro `?estado=`, por eso el filtrado de los inactivos se hace en el repositorio del cliente.
 

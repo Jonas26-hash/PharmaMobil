@@ -31,11 +31,11 @@ class AuthRepositorioRemotoTest {
     private val json = headersOf(HttpHeaders.ContentType, "application/json")
 
     private val loginOk = """
-        {"token":"tok-123","usuario":"admin","nombreCompleto":"Ada Admin","permisos":["productos:listar","productos:registrar"]}
+        {"token":"tok-123","tipo":"Bearer","expiraEnSegundos":3600,"username":"admin","nombreCompleto":"Ada Admin","roles":["ADMIN"],"permisos":["CATALOGO_LEER","CATALOGO_ESCRIBIR"]}
     """.trimIndent()
 
     private val perfilOk = """
-        {"usuario":"admin","nombreCompleto":"Ada Admin","permisos":["productos:listar","productos:registrar"]}
+        {"username":"admin","empleadoNombre":"Ada Admin","roles":["ADMIN"],"permisos":["CATALOGO_LEER","CATALOGO_ESCRIBIR"]}
     """.trimIndent()
 
     private class Entorno(
@@ -73,8 +73,8 @@ class AuthRepositorioRemotoTest {
 
         assertEquals("tok-123", sesion.token)
         assertEquals("Ada Admin", sesion.nombreCompleto)
-        assertTrue(sesion.puede(Permisos.PRODUCTOS_LISTAR))
-        assertTrue(sesion.puede(Permisos.PRODUCTOS_REGISTRAR))
+        assertTrue(sesion.puede(Permisos.CATALOGO_LEER))
+        assertTrue(sesion.puede(Permisos.CATALOGO_ESCRIBIR))
         assertEquals("tok-123", entorno.almacen.leerToken())
     }
 
@@ -124,7 +124,7 @@ class AuthRepositorioRemotoTest {
 
         assertEquals("tok-123", sesion?.token)
         assertEquals("Ada Admin", sesion?.nombreCompleto)
-        assertTrue(sesion?.puede(Permisos.PRODUCTOS_REGISTRAR) == true)
+        assertTrue(sesion?.puede(Permisos.CATALOGO_ESCRIBIR) == true)
     }
 
     @Test

@@ -141,9 +141,9 @@ class LoginViewModelTest {
             usuario = "admin",
             nombreCompleto = "Ada Admin",
             permisos = setOf(
-                Permisos.PRODUCTOS_LISTAR,
-                Permisos.PRODUCTOS_REGISTRAR,
-                Permisos.CLIENTES_LISTAR,
+                Permisos.CATALOGO_LEER,
+                Permisos.CATALOGO_ESCRIBIR,
+                Permisos.CLIENTES_LEER,
                 Permisos.VENTAS_REGISTRAR,
                 Permisos.REPORTES_VER
             )
