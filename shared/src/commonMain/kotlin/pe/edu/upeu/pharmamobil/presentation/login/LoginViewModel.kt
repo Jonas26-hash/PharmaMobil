@@ -67,9 +67,10 @@ class LoginViewModel(
                     )
                 )
 
-                // La contraseña no se conserva en el estado tras autenticar.
+                // Tras autenticar no se conservan las credenciales en el estado:
+                // así, al cerrar sesión, el formulario vuelve a aparecer vacío.
                 _uiState.update {
-                    it.copy(cargando = false, contrasena = "")
+                    it.copy(cargando = false, usuario = "", contrasena = "")
                 }
                 gestorSesion.establecer(sesion)
 

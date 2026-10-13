@@ -78,6 +78,7 @@ class LoginViewModelTest {
 
         assertNull(vista.uiState.value.error)
         assertFalse(vista.uiState.value.cargando)
+        assertEquals("", vista.uiState.value.usuario)
         assertEquals("", vista.uiState.value.contrasena)
         assertSame(auth.sesionAdministrador, gestor.sesion.value)
         assertEquals(auth.sesionAdministrador.token, almacen.leerToken())
