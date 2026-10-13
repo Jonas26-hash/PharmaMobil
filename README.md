@@ -211,6 +211,15 @@ mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=dev
 | Dispositivo físico Android | `.\gradlew :androidApp:installDebug -PpharmaApiBaseUrl=http://<IP-local-de-la-PC>:8080/api/v1` |
 | Simulador de iOS | `-PpharmaApiBaseUrl=http://localhost:8080/api/v1` |
 
+> **Dispositivo físico con `adb reverse` (sin tocar IP ni firewall).** Con el teléfono conectado por USB, `adb reverse tcp:8080 tcp:8080` hace que el `127.0.0.1:8080` del teléfono apunte al `127.0.0.1:8080` de la PC. Así basta compilar con la URL local:
+>
+> ```bat
+> adb reverse tcp:8080 tcp:8080
+> .\gradlew :androidApp:installDebug -PpharmaApiBaseUrl=http://127.0.0.1:8080/api/v1
+> ```
+>
+> Es la forma recomendada con un teléfono real: evita depender de la IP de la red (que cambia) y de reglas del Firewall. Funciona igual con el backend real `pharmaSoft` o con el servidor mock de evidencia.
+
 Para averiguar la IP local de la PC: `ipconfig`, sección del adaptador Wi-Fi.
 
 > La IP cambia con frecuencia (DHCP). Si el listado muestra "No se pudo conectar con el servidor", casi siempre es que la IP cambió: vuelve a compilar con la nueva. La app no lleva la IP escrita a mano, por eso el cambio es solo recompilar.
