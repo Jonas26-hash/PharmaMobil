@@ -3,7 +3,6 @@ package pe.edu.upeu.pharmamobil.data.repository
 import pe.edu.upeu.pharmamobil.domain.model.Categoria
 import pe.edu.upeu.pharmamobil.domain.repository.CategoriaRepository
 
-/** Doble del catálogo de categorías del backend, con fallo configurable. */
 class FakeCategoriaRepository(
     private val categorias: List<Categoria> = DEFAULT_CATEGORIAS
 ) : CategoriaRepository {

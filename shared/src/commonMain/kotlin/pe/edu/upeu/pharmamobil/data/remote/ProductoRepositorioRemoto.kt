@@ -6,12 +6,6 @@ import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.model.Venta
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
 
-/**
- * Inventario servido por el backend REST. Implementa la misma interfaz [ProductoRepository]
- * que antes solo tenÃ­a la versiÃ³n en memoria: la presentaciÃ³n no sabe desde
- * dÃ³nde llegan los datos. Cada llamada envuelve los fallos de red en
- * [pe.edu.upeu.pharmamobil.domain.ErrorApi].
- */
 class ProductoRepositorioRemoto(
     private val api: ProductoApi,
     private val ventaApi: VentaApi
@@ -29,12 +23,6 @@ class ProductoRepositorioRemoto(
         api.eliminar(productoId)
     }
 
-    /**
-     * El backend no filtra por `estado`: `GET /productos` devuelve tambiÃ©n los
-     * desactivados y el parÃ¡metro `?estado=` se ignora. Como `DELETE` es una
-     * baja lÃ³gica (`estado = false`), se filtra aquÃ­ para que el inventario
-     * que ve el usuario no muestre lo que ya dio de baja.
-     */
     override suspend fun listar(): List<Producto> = alAplicacion {
         api.listar().map { it.aDominio() }.filter { it.activo }
     }
@@ -55,11 +43,6 @@ class ProductoRepositorioRemoto(
             ).aDominio()
         }
 
-    /**
-     * El backend no publica eventos en tiempo real: el flujo emite el estado
-     * vigente cada vez que alguien lo recolecta (la UI prefiere los casos de
-     * uso con listado explÃ­cito).
-     */
     override fun observarProductos(): Flow<List<Producto>> = flow {
         emit(listar())
     }

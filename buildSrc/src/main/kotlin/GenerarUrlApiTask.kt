@@ -5,13 +5,6 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
 
-/**
- * Genera un archivo Kotlin con la URL base del backend pharmaSoft.
- *
- * Existe como tarea tipada (y no como un `doLast` dentro de
- * shared/build.gradle.kts) porque el caché de configuración de Gradle no
- * permite que una acción de tarea guarde referencias al script del build.
- */
 abstract class GenerarUrlApiTask : DefaultTask() {
 
     @get:Input

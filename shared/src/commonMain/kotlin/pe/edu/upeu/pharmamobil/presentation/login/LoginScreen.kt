@@ -41,12 +41,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 
-/**
- * Pantalla de inicio de sesión.
- *
- * La contraseña nunca se muestra en claro salvo que el usuario lo pida con el
- * ojo; el token de sesión no aparece en la interfaz en ningún momento.
- */
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel,

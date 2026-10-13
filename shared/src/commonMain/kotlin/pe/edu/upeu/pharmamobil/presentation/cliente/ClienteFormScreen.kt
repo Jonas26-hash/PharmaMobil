@@ -50,9 +50,6 @@ fun ClienteFormScreen(
         viewModel.configurarCliente(clienteId)
     }
 
-    // Se observan en tiempo de ejecución (y no con el valor capturado al
-    // componer) porque el ViewModel sobrevive a la navegación: un mensaje de
-    // éxito viejo no debe devolver al listado al reabrir el formulario.
     LaunchedEffect(Unit) {
         viewModel.uiState.collect { estado ->
 

@@ -56,11 +56,6 @@ fun ProductoFormScreen(
         viewModel.configurarProducto(productoId)
     }
 
-    // Los mensajes se observan en tiempo de ejecución y no con el valor
-    // capturado al componer: el ViewModel sobrevive a la navegación, así que un
-    // mensaje de éxito viejo no debe devolver al listado al reabrir el
-    // formulario. Guardar o eliminar terminan con mensajeExito y recién ahí se
-    // vuelve al listado, que recarga el estado vigente del backend.
     LaunchedEffect(Unit) {
         viewModel.uiState.collect { estado ->
 

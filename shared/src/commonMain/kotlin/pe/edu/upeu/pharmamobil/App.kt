@@ -73,10 +73,6 @@ import pe.edu.upeu.pharmamobil.presentation.producto.ProductoScreen
 import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
 import pe.edu.upeu.pharmamobil.theme.PharmaMobilTheme
 
-/**
- * Sección del menú. [permiso] es el permiso que la sesión debe tener para que
- * el destino se muestre; `null` significa que siempre está visible.
- */
 private data class Destino(
     val screen: Screen,
     val titulo: String,
@@ -100,8 +96,6 @@ fun App() = KoinContext {
 
     val sesion by gestorSesion.sesion.collectAsStateWithLifecycle()
 
-    // Recuperación de sesión al arrancar: si hay un token guardado y sigue
-    // siendo válido, se entra directo; si no, se permanece en el login.
     LaunchedEffect(Unit) {
         val recuperada = runCatching { authRepository.recuperarSesion() }.getOrNull()
         if (recuperada != null) gestorSesion.establecer(recuperada)
@@ -111,9 +105,6 @@ fun App() = KoinContext {
 
     if (actual == null) {
 
-        // Sin sesión: solo existe la pantalla de login. No hay forma de volver
-        // a una pantalla autenticada con Atrás porque esas pantallas ni se
-        // componen mientras no haya sesión.
         LoginScreen(
             viewModel = koinViewModel<LoginViewModel>(),
             modifier = Modifier.fillMaxSize()
@@ -124,8 +115,6 @@ fun App() = KoinContext {
             sesion = actual,
             onCerrarSesion = {
                 scope.launch {
-                    // El borrado local es la fuente de verdad: aunque la llamada
-                    // al servidor falle, la app vuelve al login.
                     runCatching { authRepository.cerrarSesion() }
                     gestorSesion.limpiar()
                 }
@@ -349,7 +338,6 @@ private fun ContenidoAutenticado(
     }
 }
 
-/** A qué sección del menú pertenece una pantalla (formularios incluidos). */
 private fun seccionDe(screen: Screen): Screen = when (screen) {
     is Screen.RegistrarProducto -> Screen.Productos
     is Screen.RegistrarCliente -> Screen.Clientes
@@ -398,10 +386,6 @@ private fun DrawerHeader() {
     }
 }
 
-/**
- * Bloque de sesión del menú: muestra quién está conectado y permite cerrar
- * sesión. El token nunca se muestra; solo el nombre y el usuario.
- */
 @Composable
 private fun SesionActual(
     sesion: Sesion,

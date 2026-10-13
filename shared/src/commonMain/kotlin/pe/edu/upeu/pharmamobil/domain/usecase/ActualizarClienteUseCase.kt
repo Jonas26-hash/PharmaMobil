@@ -3,7 +3,6 @@ package pe.edu.upeu.pharmamobil.domain.usecase
 import pe.edu.upeu.pharmamobil.domain.model.Cliente
 import pe.edu.upeu.pharmamobil.domain.repository.ClienteRepository
 
-/** Actualiza un cliente existente. Comparte la validación con el registro. */
 class ActualizarClienteUseCase(
     private val clienteRepository: ClienteRepository
 ) {

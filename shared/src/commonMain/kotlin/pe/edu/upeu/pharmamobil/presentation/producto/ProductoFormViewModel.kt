@@ -14,11 +14,6 @@ import pe.edu.upeu.pharmamobil.domain.usecase.ObtenerProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ProductoInvalidoException
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
 
-/**
- * Formulario de producto: registro cuando el producto aún no tiene id y
- * edición cuando la pantalla le pasa uno. También carga el catálogo de
- * categorías para el selector.
- */
 class ProductoFormViewModel(
     private val registrarProducto: RegistrarProductoUseCase,
     private val actualizarProducto: ActualizarProductoUseCase,
@@ -55,12 +50,6 @@ class ProductoFormViewModel(
         }
     }
 
-    /**
-     * Prepara el formulario para la pantalla. Cada visita arranca limpia: el
-     * ViewModel sobrevive a la navegación, así que sin este reset el formulario
-     * de registro mostraría los datos del guardado anterior y el mensaje de
-     * éxito anterior devolvería al listado nada más abrirlo.
-     */
     fun configurarProducto(productoId: Long?) {
 
         _uiState.update {
@@ -254,7 +243,6 @@ class ProductoFormViewModel(
         _uiState.update { it.copy(mensaje = null) }
     }
 
-    /** La pantalla lo llama antes de volver al listado: el mensaje no se repite. */
     fun consumirMensajeExito() {
         _uiState.update { it.copy(mensajeExito = null) }
     }

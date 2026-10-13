@@ -5,11 +5,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
-/**
- * El "No registrado" del teléfono ausente ya no se prueba aquí: era texto de
- * pantalla dentro de un modelo de dominio y ahora vive en [ClienteUi]. Lo que
- * sí le corresponde al modelo son sus invariantes.
- */
 class ClienteTest {
 
     private fun cliente(

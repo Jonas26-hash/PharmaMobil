@@ -9,10 +9,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pe.edu.upeu.pharmamobil.domain.usecase.ListarClientesUseCase
 
-/**
- * Cartera de clientes: carga el listado del backend y filtra por el texto de
- * búsqueda. El registro y la edición viven en [ClienteFormViewModel].
- */
 class ClienteViewModel(
     private val listarClientes: ListarClientesUseCase
 ) : ViewModel() {

@@ -22,11 +22,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * Una prueba del ViewModel de formulario no debe tocar la red: se construye
- * con los dobles y casos de uso reales (así se compara también la firma de
- * cada caso con lo que el ViewModel le pide).
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProductoFormViewModelTest {
 
@@ -198,11 +193,6 @@ class ProductoFormViewModelTest {
         assertTrue(repositorio.listar().isEmpty())
     }
 
-    /**
-     * El ViewModel sobrevive a la navegación: al reabrir el formulario de
-     * registro no puede quedar el mensaje de éxito del guardado anterior (esa
-     * pantalla lo consumió al volver al listado) ni el formulario llenado.
-     */
     @Test
     fun reabrirElFormularioLimpiaElEstadoDelGuardadoAnterior() = runTest {
 

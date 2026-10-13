@@ -4,14 +4,6 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/**
- * La sesión concentra la consulta de permisos: la interfaz oculta acciones con
- * [Sesion.puede] / [Sesion.puedeAlguno] y nunca compara roles a mano.
- *
- * Los nombres de permisos son el contrato esperado de la guía (ver
- * [Permisos]); estas pruebas verifican la semántica de la consulta, no el
- * catálogo.
- */
 class SesionTest {
 
     private val sesionAdmin = Sesion(

@@ -19,11 +19,6 @@ class ClienteInvalidoException(
     val errores: ErroresDeCliente
 ) : IllegalArgumentException("Los datos del cliente no cumplen las reglas del negocio")
 
-/**
- * Registra un cliente en la cartera contra el backend REST. Concentra en el
- * dominio las reglas que antes vivían en ClienteValidator (presentación):
- * qué correo o teléfono se acepta lo decide el negocio, no la pantalla.
- */
 class RegistrarClienteUseCase(
     private val clienteRepository: ClienteRepository
 ) {

@@ -1,9 +1,5 @@
 package pe.edu.upeu.pharmamobil.presentation.producto
 
-/**
- * Estado del formulario de producto (registro o edición). El id nulo indica
- * que se está registrando; presente, que se está editando el producto.
- */
 data class ProductoFormUiState(
     val cargandoProducto: Boolean = false,
     val categorias: List<CategoriaUi> = emptyList(),

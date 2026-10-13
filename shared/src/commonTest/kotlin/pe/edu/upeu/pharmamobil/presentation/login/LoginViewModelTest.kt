@@ -25,11 +25,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
-/**
- * La pantalla de login solo conversa con [AuthRepository] y [GestorSesion]:
- * la credencial se elimina del estado tras autenticar, un doble toque no lanza
- * dos logins y un 401 se muestra como mensaje claro sin avanzar a sesión.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoginViewModelTest {
 
@@ -111,7 +106,6 @@ class LoginViewModelTest {
         vista.ingresar()
         vista.ingresar()
 
-        // La segunda llamada se ignora porque la primera sigue en curso.
         assertEquals(1, auth.llamadas)
 
         retraso.complete(Unit)

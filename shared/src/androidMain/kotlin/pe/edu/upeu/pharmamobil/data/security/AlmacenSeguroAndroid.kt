@@ -11,18 +11,6 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import pe.edu.upeu.pharmamobil.domain.security.AlmacenSeguro
 
-/**
- * Almacenamiento del token respaldado por el **Android Keystore**.
- *
- * El token se cifra con AES-256/GCM usando una clave que nunca sale del
- * Keystore del sistema (no es exportable ni legible por la app). En
- * `SharedPreferences` solo queda el texto cifrado en Base64 más su IV, así que
- * abrir el XML de preferencias no revela el JWT.
- *
- * Se eligió Keystore + GCM en lugar de `EncryptedSharedPreferences` para no
- * añadir una dependencia (hoy en desuso) y mantener el cifrado bajo control:
- * minSdk del proyecto es 24, muy por encima del API 23 que exige AES/GCM.
- */
 class AlmacenSeguroAndroid(
     context: Context
 ) : AlmacenSeguro {
@@ -38,7 +26,6 @@ class AlmacenSeguroAndroid(
         val iv = cifrador.iv
         val cifrado = cifrador.doFinal(token.toByteArray(Charsets.UTF_8))
 
-        // IV (12 B) + texto cifrado, todo en Base64 y sin saltos de línea.
         val empaquetado = Base64.encodeToString(iv + cifrado, Base64.NO_WRAP)
 
         preferencias.edit().putString(CLAVE_TOKEN, empaquetado).apply()
@@ -62,8 +49,6 @@ class AlmacenSeguroAndroid(
 
             String(descifrador.doFinal(cifrado), Charsets.UTF_8)
         } catch (_: Exception) {
-            // Token ilegible (clave rotada o dato corrupto): se descarta para no
-            // dejar la app atrapada con una sesión que nunca cargará.
             borrarToken()
             null
         }
@@ -73,7 +58,6 @@ class AlmacenSeguroAndroid(
         preferencias.edit().remove(CLAVE_TOKEN).apply()
     }
 
-    /** Recupera la clave del Keystore o la crea la primera vez. */
     private fun claveDelKeystore(): SecretKey {
 
         val keystore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }

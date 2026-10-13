@@ -12,19 +12,6 @@ import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.model.Venta
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
 
-/**
- * Almacenamiento en memoria de productos. El id lo asigna el repositorio,
- * no la pantalla, para evitar identificadores duplicados.
- *
- * El delay simula la latencia que traerá el backend REST, de modo que el
- * estado de carga de la pantalla sea visible desde ahora.
- *
- * Koin lo registra como single, así que es un objeto compartido y sus métodos
- * son suspend: nada garantiza que dos llamadas no se crucen. El [Mutex]
- * protege la lista y el contador de ids de esa carrera. Los cambios se
- * publican con un StateFlow para que la pantalla reaccione a ventas y
- * registros sin recargar a mano.
- */
 class ProductoRepositorioEnMemoria : ProductoRepository {
 
     private val candado = Mutex()

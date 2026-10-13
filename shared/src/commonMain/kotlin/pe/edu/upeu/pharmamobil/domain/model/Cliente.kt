@@ -1,10 +1,5 @@
 package pe.edu.upeu.pharmamobil.domain.model
 
-/**
- * Cliente de la cartera. Modelo propio del proyecto, más rico que el del
- * curso (apellido, DNI y dirección), con sus invariantes validadas en el
- * constructor. El id lo asigna el repositorio, no la pantalla.
- */
 data class Cliente(
     val id: Long,
     val nombre: String,

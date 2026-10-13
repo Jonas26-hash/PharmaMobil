@@ -15,10 +15,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
-/**
- * El listado no carga en el init ni registra: [ClienteViewModel] solo lista y
- * filtra; el registro y la edición viven en [ClienteFormViewModel].
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ClienteViewModelTest {
 

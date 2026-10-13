@@ -1,9 +1,5 @@
 package pe.edu.upeu.pharmamobil.presentation.cliente
 
-/**
- * Estado del formulario de cliente (registro o edición). El id nulo indica
- * que se está registrando; presente, que se está editando el cliente.
- */
 data class ClienteFormUiState(
     val cargandoCliente: Boolean = false,
     val formulario: FormularioCliente = FormularioCliente(),

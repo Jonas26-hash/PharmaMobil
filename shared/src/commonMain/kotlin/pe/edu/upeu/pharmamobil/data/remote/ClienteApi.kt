@@ -9,15 +9,6 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 
-/**
- * Cliente HTTP de la cartera de clientes. Traduce los endpoints de
- * pharmaSoft:
- *  - GET    /api/v1/clientes            (paginado)
- *  - GET    /api/v1/clientes/{id}
- *  - POST   /api/v1/clientes
- *  - PUT    /api/v1/clientes/{id}
- *  - DELETE /api/v1/clientes/{id}
- */
 class ClienteApi(
     private val client: HttpClient
 ) {

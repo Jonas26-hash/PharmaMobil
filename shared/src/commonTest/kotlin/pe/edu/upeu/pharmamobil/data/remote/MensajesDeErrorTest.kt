@@ -18,13 +18,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
-/**
- * Cada error HTTP y de transporte debe llegar al dominio como un [ErrorApi]
- * tipado y con un mensaje legible, nunca con los detalles técnicos de Ktor.
- *
- * Se simulan las respuestas con MockEngine y se comprueba el envoltorio
- * [alAplicacion] que usan los repositorios remotos.
- */
 class MensajesDeErrorTest {
 
     private fun clienteQueResponde(
@@ -98,7 +91,6 @@ class MensajesDeErrorTest {
         assertEquals("Se produjo un error inesperado.", sinMensaje.mensaje)
     }
 
-    /** GET real contra el repositorio y mensaje del [ErrorApi.Validacion]. */
     private suspend fun mensajeDeValidacionAlObtener(estado: HttpStatusCode): String {
         val repositorio = ProductoRepositorioRemoto(
             ProductoApi(clienteQueResponde(estado)),
@@ -108,7 +100,6 @@ class MensajesDeErrorTest {
         return (error.error as ErrorApi.Validacion).mensaje
     }
 
-    /** GET real contra el repositorio y mensaje legible del [ErrorApi.Servidor]. */
     private suspend fun mensajeParaUsuarioAlObtener(estado: HttpStatusCode): String {
         val repositorio = ProductoRepositorioRemoto(
             ProductoApi(clienteQueResponde(estado)),
@@ -119,10 +110,6 @@ class MensajesDeErrorTest {
     }
 }
 
-/**
- * Cobertura específica de la traducción a [ErrorApi] usando cuerpos con la
- * forma real de `ErrorResponseDTO` de pharmaSoft.
- */
 class TraduccionErrorApiTest {
 
     private fun clienteQueResponde(estado: HttpStatusCode, cuerpo: String) =

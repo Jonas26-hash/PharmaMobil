@@ -19,10 +19,6 @@ data class ProductoUi(
     val requiereReposicion: Boolean
 )
 
-/**
- * Categoría tal y como la muestra el formulario: solo el par id/nombre que
- * necesita el selector desplegable.
- */
 data class CategoriaUi(
     val id: Long,
     val nombre: String
@@ -48,7 +44,6 @@ fun Categoria.aUi(): CategoriaUi = CategoriaUi(
     nombre = nombre
 )
 
-/** Kotlin común no trae String.format, así que armamos los dos decimales a mano. */
 internal fun Double.enSoles(): String {
 
     val centavos = (this * 100).roundToLong()
@@ -59,7 +54,6 @@ internal fun Double.enSoles(): String {
     return "S/ $enteros.$decimales"
 }
 
-/** Precio listo para editar en el formulario: un número sin ceros colgantes. */
 internal fun Double.aTextoEditorial(): String {
     val texto = toString()
     return when {

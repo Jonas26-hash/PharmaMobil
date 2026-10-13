@@ -12,12 +12,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * Verifica que [AuthApi] habla el contrato de autenticación real de pharmaSoft
- * sin tocar la red:
- *  - POST /api/v1/auth/login con { username, password } y SIN Authorization
- *  - GET /api/v1/auth/me con la cabecera Authorization del token guardado
- */
 class AuthApiTest {
 
     private val json = headersOf(HttpHeaders.ContentType, "application/json")

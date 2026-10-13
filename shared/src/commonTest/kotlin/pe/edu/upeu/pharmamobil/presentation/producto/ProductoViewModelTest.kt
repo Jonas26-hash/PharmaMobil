@@ -24,10 +24,6 @@ import kotlin.test.assertTrue
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
-/**
- * [ProductoViewModel] gobierna dos ejes de estado: FASE (qué se ve) y
- * OPERACION (qué mutación está en curso). Estos tests cubren la guía práctica.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProductoViewModelTest {
 
@@ -130,14 +126,7 @@ class ProductoViewModelTest {
         assertEquals(listOf("Ibuprofeno"), visibles.map { it.nombre })
     }
 
-    // ========== Tests requeridos por la guía ==========
 
-    /**
-     * REQUISITO 16-a: Cargando → ConProductos
-     *
-     * La fase arranca en Cargando y, tras una carga exitosa con datos,
-     * transiciona a ConProductos. La lista no está vacía.
-     */
     @Test
     fun faseCargandoPasaAConProductosCuandoHayDatos() = runTest {
 
@@ -149,24 +138,15 @@ class ProductoViewModelTest {
 
         val viewModel = nuevoViewModel(repositorio)
 
-        // Estado inicial
         assertEquals(ProductoUiState.Fase.Cargando, viewModel.uiState.value.fase)
 
-        // Dispara carga
         viewModel.cargarProductos()
 
-        // Fase final
         val fase = assertIs<ProductoUiState.Fase.ConProductos>(viewModel.uiState.value.fase)
         assertEquals(1, fase.productos.size)
         assertEquals("Paracetamol", fase.productos.first().nombre)
     }
 
-    /**
-     * REQUISITO 16-b: Cargando → SinProductos
-     *
-     * La fase arranca en Cargando y, tras una carga exitosa SIN datos,
-     * transiciona a SinProductos.
-     */
     @Test
     fun faseCargandoPasaASinProductosCuandoInventarioVacio() = runTest {
 
@@ -179,23 +159,14 @@ class ProductoViewModelTest {
         assertEquals(ProductoUiState.Fase.SinProductos, viewModel.uiState.value.fase)
     }
 
-    /**
-     * REQUISITO 16-c: error de validación con errores por campo
-     *
-     * Al crear un producto con datos inválidos, la operación pasa a
-     * Fallida(Crear) y el ErrorApi.Validacion conserva el mapa de errores
-     * por campo (nombre, precio, stock, categoriaId).
-     */
     @Test
     fun crearConDatosInvalidosGeneraOperacionFallidaConErroresPorCampo() = runTest {
 
         val repositorio = FakeProductoRepository()
         val viewModel = nuevoViewModel(repositorio)
 
-        // Dispara creación con nombre vacío, precio negativo, stock inválido, sin categoría
         viewModel.crear("", "-1", "abc", true, 0L)
 
-        // Operación final: Fallida(Crear) con ErrorApi.Validacion
         val operacion = viewModel.uiState.value.operacion
         val fallida = assertIs<ProductoUiState.Operacion.Fallida>(operacion)
         assertEquals(ProductoUiState.TipoOperacion.Crear, fallida.tipo)
@@ -208,13 +179,6 @@ class ProductoViewModelTest {
         assertNotNull(validacion.erroresPorCampo["categoriaId"])
     }
 
-    /**
-     * REQUISITO 16-d: EnCurso(Eliminar) → Inactiva + recarga
-     *
-     * Al eliminar un producto, la operación pasa a EnCurso(Eliminar) y,
-     * tras el éxito, vuelve a Inactiva y se recarga la lista desde el
-     * repositorio (reflejando la baja lógica).
-     */
     @Test
     fun eliminarProductoPasaAEnCursoEliminarYLuegoInactivaConRecarga() = runTest {
 
@@ -228,25 +192,16 @@ class ProductoViewModelTest {
         val repositorio = FakeProductoRepository(mutableListOf(productoExistente))
         val viewModel = nuevoViewModel(repositorio)
 
-        // Carga inicial: lista con 1 producto
         viewModel.cargarProductos()
         val faseInicial = assertIs<ProductoUiState.Fase.ConProductos>(viewModel.uiState.value.fase)
         assertEquals(1, faseInicial.productos.size)
 
-        // Dispara eliminación
         viewModel.eliminar(42L)
 
-        // Al terminar: operación Inactiva + lista recargada (vacía -> SinProductos)
         assertEquals(ProductoUiState.Operacion.Inactiva, viewModel.uiState.value.operacion)
         assertEquals(ProductoUiState.Fase.SinProductos, viewModel.uiState.value.fase)
     }
 
-    /**
-     * REQUISITO 15: Cancelación no se convierte en ErrorApi
-     *
-     * Si la corrutina que ejecuta una mutación se cancela, la
-     * CancellationException se propaga y NO se envuelve en ErrorApi.
-     */
     @Test
     fun cancelacionDuranteMutacionPropagaCancellationException() = runTest {
 
@@ -255,12 +210,10 @@ class ProductoViewModelTest {
         )
         val viewModel = nuevoViewModel(repositorio)
 
-        // Dispara eliminación y cancela inmediatamente el job de prueba
         val job = launch { viewModel.eliminar(1L) }
         job.cancel()
         job.join()
 
-        // La cancelación se propaga: no hay operación Fallida por cancelación
         assertEquals(ProductoUiState.Operacion.Inactiva, viewModel.uiState.value.operacion)
     }
 }

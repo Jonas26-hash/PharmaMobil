@@ -35,18 +35,6 @@ import kotlin.test.Test
 import kotlin.test.assertIs
 import kotlin.test.assertSame
 
-/**
- * Comprueba que el grafo se ensambla sin arrancar la aplicación: si una
- * definición falta o está declarada con el tipo equivocado, falla aquí.
- *
- * Los repositorios resueltos son las variantes remotas (REST). Construir el
- * [HttpClient] de Koin en una prueba es seguro: no sale a la red hasta que
- * alguien haga una petición.
- *
- * [ProductoFormViewModel] no se resuelve aquí a propósito: su init pide el
- * catálogo de categorías (una llamada real de red). Su construcción queda
- * cubierta con dobles en ProductoFormViewModelTest.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AppModuleTest {
 

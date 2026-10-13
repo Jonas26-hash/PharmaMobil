@@ -3,7 +3,6 @@ package pe.edu.upeu.pharmamobil.domain.usecase
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
 
-/** Actualiza un producto existente. Comparte la validación con el registro. */
 class ActualizarProductoUseCase(
     private val productoRepository: ProductoRepository
 ) {

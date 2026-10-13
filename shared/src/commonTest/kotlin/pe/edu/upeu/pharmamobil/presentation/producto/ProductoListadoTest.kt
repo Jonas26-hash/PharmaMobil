@@ -4,10 +4,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * El inventario dejó de tener pestañas (TabInventario) y ahora se filtra con
- * una caja de búsqueda en la misma pantalla: este es el contrato del filtro.
- */
 class ProductoListadoTest {
 
     private fun productoUi(

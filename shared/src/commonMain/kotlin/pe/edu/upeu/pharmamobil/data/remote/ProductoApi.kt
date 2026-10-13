@@ -9,15 +9,6 @@ import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 
-/**
- * Cliente HTTP del inventario. Cada método es la traducción directa de un
- * endpoint de pharmaSoft:
- *  - GET    /api/v1/productos            (paginado)
- *  - GET    /api/v1/productos/{id}
- *  - POST   /api/v1/productos
- *  - PUT    /api/v1/productos/{id}
- *  - DELETE /api/v1/productos/{id}
- */
 class ProductoApi(
     private val client: HttpClient
 ) {

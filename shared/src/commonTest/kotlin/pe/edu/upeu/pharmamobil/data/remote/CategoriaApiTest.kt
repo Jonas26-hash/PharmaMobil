@@ -11,11 +11,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-/**
- * El catálogo de categorías es un endpoint plano (sin paginación): se
- * comprueba que [CategoriaApi] lo pide tal cual y que el repositorio remoto
- * lo traduce al dominio.
- */
 class CategoriaApiTest {
 
     @Test

@@ -8,9 +8,6 @@ import pe.edu.upeu.pharmamobil.domain.model.DetalleVenta
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.model.Venta
 
-// ---------------------------------------------------------------------------
-// Traducción entre el contrato REST (DTO) y los modelos del dominio.
-// ---------------------------------------------------------------------------
 
 fun ProductoResponseDto.aDominio(): Producto = Producto(
     id = id,
@@ -73,9 +70,6 @@ fun DetalleVentaResponseDto.aDominio(): DetalleVenta = DetalleVenta(
     subtotal = subtotal
 )
 
-// ---------------------------------------------------------------------------
-// Autenticación
-// ---------------------------------------------------------------------------
 
 fun Credenciales.aRemoto(): LoginRequestDto = LoginRequestDto(
     username = usuario,

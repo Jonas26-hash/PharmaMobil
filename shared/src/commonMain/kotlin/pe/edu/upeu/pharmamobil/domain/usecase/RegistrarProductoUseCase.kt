@@ -18,15 +18,6 @@ class ProductoInvalidoException(
     val errores: ErroresDeProducto
 ) : IllegalArgumentException("Los datos del producto no cumplen las reglas del negocio")
 
-/**
- * Registra un producto en el inventario contra el backend REST. Concentra la
- * validación (antes repartida entre la pantalla y el repositorio) en el
- * dominio; la pantalla solo muestra los errores que esta devuelve.
- *
- * Los campos que el backend no acepta (descripcion, requiereReceta) salen
- * del formulario: la identidad del producto la define nombre, precio, stock,
- * estado y la categoría, que es un id real del catálogo del servidor.
- */
 class RegistrarProductoUseCase(
     private val productoRepository: ProductoRepository
 ) {

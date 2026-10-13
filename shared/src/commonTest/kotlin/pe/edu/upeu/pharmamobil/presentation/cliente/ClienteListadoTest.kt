@@ -4,7 +4,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/** Contrato del filtro de la cartera: busca sobre nombre completo y DNI. */
 class ClienteListadoTest {
 
     private fun clienteUi(

@@ -5,11 +5,6 @@ import kotlinx.coroutines.flow.flow
 import pe.edu.upeu.pharmamobil.domain.model.Cliente
 import pe.edu.upeu.pharmamobil.domain.repository.ClienteRepository
 
-/**
- * Cartera servida por el backend REST. Gemelo de [ProductoRepositorioRemoto]:
- * implementa la interfaz de dominio y traduce los fallos de red a
- * [pe.edu.upeu.pharmamobil.domain.ErrorApi].
- */
 class ClienteRepositorioRemoto(
     private val api: ClienteApi
 ) : ClienteRepository {
@@ -26,10 +21,6 @@ class ClienteRepositorioRemoto(
         api.eliminar(clienteId)
     }
 
-    /**
-     * Igual que en productos, el backend ignora el filtro `?estado=`, asÃ­ que
-     * se descartan aquÃ­ los clientes dados de baja (`DELETE` es baja lÃ³gica).
-     */
     override suspend fun listar(): List<Cliente> = alAplicacion {
         api.listar().map { it.aDominio() }.filter { it.activo }
     }
@@ -38,7 +29,6 @@ class ClienteRepositorioRemoto(
         api.obtenerPorId(clienteId).aDominio()
     }
 
-    /** El backend no publica eventos en tiempo real: emite el estado vigente. */
     override fun observarClientes(): Flow<List<Cliente>> = flow {
         emit(listar())
     }

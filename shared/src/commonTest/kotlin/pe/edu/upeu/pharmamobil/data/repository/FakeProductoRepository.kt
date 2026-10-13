@@ -7,11 +7,6 @@ import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.model.Venta
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
 
-/**
- * Doble del inventario para las pruebas: sin delay y capaz de fallar a
- * voluntad. Sin él, probar el camino de error del caso de uso o del ViewModel
- * era imposible, porque el repositorio en memoria nunca falla.
- */
 class FakeProductoRepository(
     private val productos: MutableList<Producto> = mutableListOf()
 ) : ProductoRepository {

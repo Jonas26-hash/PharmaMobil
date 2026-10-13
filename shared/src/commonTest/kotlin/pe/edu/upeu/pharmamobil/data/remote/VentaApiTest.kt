@@ -12,11 +12,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * POST /ventas con { clienteId, detalles: [{productoId, cantidad}] }: se
- * verifica el cuerpo publicado y la traducción de [VentaResponseDto] al
- * dominio (total y detalle).
- */
 class VentaApiTest {
 
     @Test

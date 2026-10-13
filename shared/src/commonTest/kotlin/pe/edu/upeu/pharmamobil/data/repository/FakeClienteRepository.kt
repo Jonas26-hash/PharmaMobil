@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import pe.edu.upeu.pharmamobil.domain.model.Cliente
 import pe.edu.upeu.pharmamobil.domain.repository.ClienteRepository
 
-/** Doble de la cartera de clientes, gemelo de [FakeProductoRepository]. */
 class FakeClienteRepository(
     private val clientes: MutableList<Cliente> = mutableListOf()
 ) : ClienteRepository {

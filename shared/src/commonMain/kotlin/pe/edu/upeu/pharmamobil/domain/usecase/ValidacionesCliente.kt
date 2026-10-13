@@ -3,10 +3,6 @@ package pe.edu.upeu.pharmamobil.domain.usecase
 private val EMAIL_REGEX = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
 private val TELEFONO_REGEX = Regex("^[0-9]{6,9}$")
 
-/**
- * Reglas de negocio del cliente, compartidas por Registro y Actualización
- * para que la validación no viva en dos sitios con mensajes distintos.
- */
 internal object ValidacionesCliente {
 
     fun nombre(nombre: String): String? {
@@ -25,7 +21,6 @@ internal object ValidacionesCliente {
         }
     }
 
-    /** El correo es opcional: solo se valida el formato si viene escrito. */
     fun email(email: String): String? {
         return if (email.isNotBlank() && !EMAIL_REGEX.matches(email.trim())) {
             "El correo no tiene un formato válido"
@@ -34,7 +29,6 @@ internal object ValidacionesCliente {
         }
     }
 
-    /** El teléfono es opcional: solo se valida el formato si viene escrito. */
     fun telefono(telefono: String): String? {
         return if (telefono.isNotBlank() && !TELEFONO_REGEX.matches(telefono.trim())) {
             "El teléfono debe tener entre 6 y 9 dígitos"

@@ -19,13 +19,6 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * Reglas de sesión del [AuthRepositorioRemoto]:
- *  - el login correcto guarda el token y devuelve la sesión con permisos;
- *  - el 401 del login es credenciales inválidas y NO deja ningún token;
- *  - un token guardado se consume vía /auth/me; si el servidor dice 401 se
- *    descarta y se cae al login; un fallo de red NO descarta el token.
- */
 class AuthRepositorioRemotoTest {
 
     private val json = headersOf(HttpHeaders.ContentType, "application/json")
@@ -104,7 +97,6 @@ class AuthRepositorioRemotoTest {
     @Test
     fun sinTokenGuardadoNoHaySesionQueRecuperar() = runTest {
 
-        // Si no hay token no debe ni dispararse una petición HTTP.
         val entorno = Entorno(
             MockEngine { error("no debería salir a la red sin token") }
         )
@@ -158,7 +150,6 @@ class AuthRepositorioRemotoTest {
         }
 
         assertIs<ErrorApi.SinConexion>(error.error)
-        // Sin red no se puede saber si el token sigue valiendo: se conserva.
         assertEquals("tok-provisional", entorno.almacen.leerToken())
     }
 

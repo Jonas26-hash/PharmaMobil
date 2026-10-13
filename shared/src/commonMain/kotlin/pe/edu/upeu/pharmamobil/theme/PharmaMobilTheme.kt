@@ -7,11 +7,6 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-/**
- * Paleta propia de PharmaMobil: verde farmacia en lugar del morado que trae
- * Material 3 por defecto. Los neutros también están teñidos de verde para que
- * las tarjetas no se vean grises sobre el fondo.
- */
 private val LightColors = lightColorScheme(
     primary = Color(0xFF006C51),
     onPrimary = Color(0xFFFFFFFF),

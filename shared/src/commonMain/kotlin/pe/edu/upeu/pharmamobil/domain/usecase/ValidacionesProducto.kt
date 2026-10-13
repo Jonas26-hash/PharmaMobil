@@ -1,14 +1,5 @@
 package pe.edu.upeu.pharmamobil.domain.usecase
 
-/**
- * Reglas de negocio del producto, compartidas por el Registro y la
- * Actualización para que la validación no viva en dos sitios con mensajes
- * distintos.
- *
- * Los umbrales reproducen las anotaciones de `ProductoRequestDTO` en
- * pharmaSoft (`@Size(min=3,max=150)`, `@DecimalMin("0.01")`, `@Min(0)`) para
- * avisar en el formulario antes de gastar una ida al servidor.
- */
 internal object ValidacionesProducto {
 
     fun nombre(nombre: String): String? {

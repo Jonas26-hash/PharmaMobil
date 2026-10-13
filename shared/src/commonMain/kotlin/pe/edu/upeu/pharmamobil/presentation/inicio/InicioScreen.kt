@@ -29,11 +29,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import pe.edu.upeu.pharmamobil.navigation.Screen
 
-/**
- * Los accesos rápidos no navegan por su cuenta: avisan a [App] con [onNavegar],
- * que es quien mantiene la pantalla actual. Así el inicio no necesita conocer
- * el estado de navegación.
- */
 @Composable
 fun InicioScreen(
     onNavegar: (Screen) -> Unit

@@ -10,12 +10,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * El backend aplica la baja de forma lógica: `DELETE` devuelve 204 y deja el
- * registro con `estado = false`, y ni `GET /productos` ni el parámetro
- * `?estado=` lo descartan. Estos tests fijan ese comportamiento para que el
- * inventario que ve el usuario no muestre lo que ya dio de baja.
- */
 class ListadoDeActivosTest {
 
     private val json = headersOf(HttpHeaders.ContentType, "application/json")
@@ -105,8 +99,6 @@ class ListadoDeActivosTest {
 
     @Test
     fun obtenerPorIdSigueDevolviendoElRegistroDesactivado() = runTest {
-        // Un producto concreto llega como objeto simple, no envuelto en la
-        // página de la lista.
         val productoDesactivado = """
             {
               "id": 21,

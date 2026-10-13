@@ -9,13 +9,6 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/**
- * Las reglas de negocio (antes ProductoValidator, en presentación) se
- * verifican aquí, donde vive la validación desde esta sesión.
- *
- * Se prueba contra [FakeProductoRepository] y no contra el repositorio en
- * memoria: una prueba de dominio no debe depender de la capa de datos.
- */
 class RegistrarProductoUseCaseTest {
 
     private fun nuevoCasoDeUso(

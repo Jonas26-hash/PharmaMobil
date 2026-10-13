@@ -13,10 +13,6 @@ import pe.edu.upeu.pharmamobil.domain.usecase.EliminarClienteUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ObtenerClienteUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarClienteUseCase
 
-/**
- * Formulario de cliente: registro cuando el cliente aún no tiene id y edición
- * cuando la pantalla le pasa uno.
- */
 class ClienteFormViewModel(
     private val registrarCliente: RegistrarClienteUseCase,
     private val actualizarCliente: ActualizarClienteUseCase,
@@ -27,12 +23,6 @@ class ClienteFormViewModel(
     private val _uiState = MutableStateFlow(ClienteFormUiState())
     val uiState: StateFlow<ClienteFormUiState> = _uiState.asStateFlow()
 
-    /**
-     * Prepara el formulario para la pantalla. Cada visita arranca limpia: el
-     * ViewModel sobrevive a la navegación, así que sin este reset el formulario
-     * de registro mostraría los datos del guardado anterior y el mensaje de
-     * éxito anterior devolvería al listado nada más abrirlo.
-     */
     fun configurarCliente(clienteId: Long?) {
 
         _uiState.update {
@@ -229,7 +219,6 @@ class ClienteFormViewModel(
         _uiState.update { it.copy(mensaje = null) }
     }
 
-    /** La pantalla lo llama antes de volver al listado: el mensaje no se repite. */
     fun consumirMensajeExito() {
         _uiState.update { it.copy(mensajeExito = null) }
     }

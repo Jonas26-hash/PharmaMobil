@@ -43,13 +43,8 @@ import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
 
 val dataModule = module {
 
-    // Estado de sesión compartido: el cliente HTTP y la interfaz observan el
-    // mismo. Depende del AlmacenSeguro que registra cada plataforma.
     single { GestorSesion(get()) }
 
-    // Un único motor HTTP por plataforma y un único cliente con la misma
-    // configuración para toda la app. El token sale del GestorSesion (nunca se
-    // escribe la cabecera a mano) y un 401 en ruta protegida limpia la sesión.
     single<HttpClientEngine> { crearMotorHttp() }
     single<HttpClient> {
         crearHttpClient(
@@ -59,7 +54,6 @@ val dataModule = module {
         )
     }
 
-    // Autenticación: el mismo HttpClient, el almacén seguro y el gestor de sesión.
     single { AuthApi(get()) }
     single<AuthRepository> { AuthRepositorioRemoto(get(), get(), get()) }
 
@@ -68,8 +62,6 @@ val dataModule = module {
     single { CategoriaApi(get()) }
     single { VentaApi(get()) }
 
-    // Los datos vienen del backend REST; los repositorios en memoria quedan
-    // como referencia de pruebas, no como la fuente de la aplicación.
     single<ProductoRepository> { ProductoRepositorioRemoto(get(), get()) }
     single<ClienteRepository> { ClienteRepositorioRemoto(get()) }
     single<CategoriaRepository> { CategoriaRepositorioRemoto(get()) }

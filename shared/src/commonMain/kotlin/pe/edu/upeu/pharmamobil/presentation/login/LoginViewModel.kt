@@ -13,13 +13,6 @@ import pe.edu.upeu.pharmamobil.domain.ErrorDeApi
 import pe.edu.upeu.pharmamobil.domain.auth.AuthRepository
 import pe.edu.upeu.pharmamobil.domain.auth.Credenciales
 
-/**
- * Autenticación de la pantalla de login.
- *
- * No conoce Ktor ni el almacén seguro: pide la [pe.edu.upeu.pharmamobil.domain.auth.Sesion]
- * al [AuthRepository] y, si es correcta, la publica en el [GestorSesion], que
- * es lo que hace que [pe.edu.upeu.pharmamobil.App] abandone el login.
- */
 class LoginViewModel(
     private val authRepository: AuthRepository,
     private val gestorSesion: GestorSesion
@@ -40,10 +33,6 @@ class LoginViewModel(
         _uiState.update { it.copy(mostrarContrasena = !it.mostrarContrasena) }
     }
 
-    /**
-     * Intenta iniciar sesión. Si ya hay una petición en curso ([LoginUiState.cargando])
-     * la ignora, de modo que un doble toque no lanza dos logins.
-     */
     fun ingresar() {
 
         val estado = _uiState.value
@@ -67,8 +56,6 @@ class LoginViewModel(
                     )
                 )
 
-                // Tras autenticar no se conservan las credenciales en el estado:
-                // así, al cerrar sesión, el formulario vuelve a aparecer vacío.
                 _uiState.update {
                     it.copy(cargando = false, usuario = "", contrasena = "")
                 }

@@ -36,19 +36,6 @@ import platform.Security.kSecReturnData
 import platform.Security.kSecValueData
 import pe.edu.upeu.pharmamobil.domain.security.AlmacenSeguro
 
-/**
- * Almacenamiento del token en el **Keychain** de iOS vía Kotlin/Native.
- *
- * Usa el servicio [servicio] y la cuenta [cuenta] como identificadores
- * estables: así la entrada se puede leer, actualizar y borrar aunque la app se
- * reinstale. Antes de guardar se elimina la entrada previa (SecItemDelete) para
- * que SecItemAdd no falle con `errSecDuplicateItem`.
- *
- * ADVERTENCIA (limitación verificada): el proyecto no puede compilar ni
- * ejecutar los targets de iOS en Windows (se requiere macOS/Xcode), así que
- * esta implementación **no ha sido compilada ni probada**. Queda marcada como
- * pendiente en el informe hasta que se valide en un Mac.
- */
 @OptIn(ExperimentalForeignApi::class)
 class AlmacenSeguroKeychain(
     private val servicio: String = "pe.edu.upeu.pharmamobil",
@@ -57,7 +44,6 @@ class AlmacenSeguroKeychain(
 
     override fun guardarToken(token: String) {
 
-        // Sin duplicados: se reemplaza la entrada existente.
         borrarToken()
 
         val datos = (token as NSString).dataUsingEncoding(NSUTF8StringEncoding) ?: return
@@ -91,7 +77,6 @@ class AlmacenSeguroKeychain(
         CFRelease(consulta)
     }
 
-    /** Consulta base (clase, servicio y cuenta) compartida por las tres operaciones. */
     private fun nuevaConsulta(): CFMutableDictionaryRef {
         val consulta = CFDictionaryCreateMutable(kCFAllocatorDefault, 4, null, null)!!
         CFDictionaryAddValue(consulta, kSecClass, kSecClassGenericPassword)

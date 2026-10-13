@@ -8,11 +8,11 @@ local.properties
 .idea
 .DS_Store
 captures
-# Capturas de pantalla: no se versionan, solo los informes .md
+documentacion/
+evidencias/
 *.png
 *.jpg
 *.jpeg
-# Logs de error en tiempo de ejecución de los servidores mock de evidencia
 *.err.log
 *.apk
 *.aab

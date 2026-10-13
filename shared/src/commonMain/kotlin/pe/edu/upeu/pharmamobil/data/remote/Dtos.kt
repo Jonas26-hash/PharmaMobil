@@ -2,10 +2,6 @@ package pe.edu.upeu.pharmamobil.data.remote
 
 import kotlinx.serialization.Serializable
 
-// ---------------------------------------------------------------------------
-// DTO del contrato REST de pharmaSoft (Spring Boot 4, endpoints en /api/v1).
-// El dominio nunca ve estos tipos: los repositorios remotos los traducen.
-// ---------------------------------------------------------------------------
 
 @Serializable
 data class ProductoRequestDto(
@@ -62,7 +58,6 @@ data class CategoriaResponseDto(
     val activo: Boolean = true
 )
 
-/** Envoltura de paginación de Spring Data: tipo de contenido dinámico. */
 @Serializable
 data class PaginaResponseDto<T>(
     val contenido: List<T> = emptyList(),
@@ -73,14 +68,6 @@ data class PaginaResponseDto<T>(
     val ultima: Boolean = true
 )
 
-/**
- * Cuerpo de error que devuelve `GlobalExceptionHandler` de pharmaSoft.
- *
- * Refleja su `ErrorResponseDTO`. `validationErrors` solo viene informado
- * cuando el fallo procede de `MethodArgumentNotValidException` o de un
- * parámetro inválido, y entonces contiene el detalle por campo con el nombre
- * del atributo de Java: `nombre`, `precio`, `stock`, `categoriaId`.
- */
 @Serializable
 data class ErrorResponseDto(
     val timestamp: String? = null,

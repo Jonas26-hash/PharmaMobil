@@ -7,10 +7,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 
-/**
- * Las reglas que antes vivían en ClienteValidator, dentro de la capa de
- * presentación, se verifican ahora en el caso de uso.
- */
 class RegistrarClienteUseCaseTest {
 
     private fun nuevoCasoDeUso(

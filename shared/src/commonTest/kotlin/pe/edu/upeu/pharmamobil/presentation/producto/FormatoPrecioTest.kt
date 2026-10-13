@@ -3,7 +3,6 @@ package pe.edu.upeu.pharmamobil.presentation.producto
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/** Formato del precio para pantalla y edición (Kotlin común no trae String.format). */
 class FormatoPrecioTest {
 
     @Test

@@ -1,11 +1,5 @@
 package pe.edu.upeu.pharmamobil.domain.model
 
-/**
- * Producto del inventario de la botica. Conserva los campos propios del
- * proyecto (descripcion, categoria, requiereReceta, activo) dentro del modelo
- * del curso, que valida sus invariantes con [require] y marca la reposicion
- * contra un stock minimo de gondola.
- */
 data class Producto(
     val id: Long,
     val nombre: String,
@@ -29,10 +23,6 @@ data class Producto(
         }
     }
 
-    /**
-     * Un producto activo necesita reposición cuando su stock cae por debajo
-     * del mínimo que la botica mantiene en góndola.
-     */
     val requiereReposicion: Boolean
         get() = activo && stock < STOCK_MINIMO
 

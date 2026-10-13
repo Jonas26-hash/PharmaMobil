@@ -13,10 +13,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-/**
- * Verifica que cada método de [ProductoApi] habla el contrato del backend
- * (rutas, query de paginación, verbo y cuerpo JSON) sin tocar la red.
- */
 class ProductoApiTest {
 
     private val json = headersOf(HttpHeaders.ContentType, "application/json")
@@ -26,9 +22,6 @@ class ProductoApiTest {
     ) = crearHttpClient(
         MockEngine { request ->
             respond(
-                // request.url.toString() incluye el origen y el path final tal
-                // como los resolvería el motor real; encodedPath por sí solo no
-                // alcanza para comprobar el prefijo de /api/v1.
                 content = respuesta(request.url.toString(), request),
                 status = HttpStatusCode.OK,
                 headers = json
@@ -86,9 +79,6 @@ class ProductoApiTest {
 
         val resultado = api.listar()
 
-        // Se compara la URL completa, no solo el suffix: una ruta absoluta
-        // ("/productos") perdería el prefijo /api/v1 de ConfigApi y el
-        // backend respondería 404 en tiempo de ejecución.
         val urlEsperada = "${ConfigApi.BASE_URL.trimEnd('/')}/productos"
         assertTrue(ruta.startsWith(urlEsperada), "se esperaba raíz $urlEsperada pero fue $ruta")
         assertEquals("0", pagina)

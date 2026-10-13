@@ -48,8 +48,6 @@ fun ProductoScreen(
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    // Al volver desde el formulario la composición se re-crea y el servidor
-    // devuelve el dato recién guardado.
     LaunchedEffect(Unit) {
         viewModel.cargarProductos()
     }
@@ -169,13 +167,6 @@ fun ProductoScreen(
     }
 }
 
-/**
- * Refleja el segundo eje del estado, la OPERACIÓN, mediante un `when` exhaustivo.
- *
- * La mutación en curso no bloquea la lista ni la devuelve a "cargando": solo
- * informa qué se está haciendo. Si la mutación falló, muestra el mensaje real
- * que devolvió el backend (404, 409, validación, sin conexión, timeout...).
- */
 @Composable
 private fun AvisoOperacion(operacion: ProductoUiState.Operacion) {
 

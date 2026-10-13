@@ -9,19 +9,6 @@ import pe.edu.upeu.pharmamobil.domain.auth.Credenciales
 import pe.edu.upeu.pharmamobil.domain.auth.Sesion
 import pe.edu.upeu.pharmamobil.domain.security.AlmacenSeguro
 
-/**
- * Autenticación servida por el backend.
- *
- * Traduce las reglas de sesión al contrato del dominio: guarda el token en el
- * [AlmacenSeguro], invalida la caché del proveedor Bearer de Ktor tras cada
- * cambio y convierte el 401 "crudo" en el error con contexto correcto
- * ([ErrorApi.CredencialesInvalidas] al iniciar sesión).
- *
- * [cliente] es el mismo `HttpClient` compartido: limpiar sus tokens con
- * `clearAuthTokens()` obliga a `loadTokens` a releer el almacén en la siguiente
- * petición, de modo que un login nuevo o un cierre de sesión nunca reutilicen
- * un token viejo.
- */
 class AuthRepositorioRemoto(
     private val api: AuthApi,
     private val almacen: AlmacenSeguro,
@@ -33,8 +20,6 @@ class AuthRepositorioRemoto(
         val sesion = try {
             alAplicacion { api.iniciarSesion(credenciales.aRemoto()).aDominio() }
         } catch (fallo: ErrorDeApi) {
-            // Un 401 aquí solo puede significar credenciales incorrectas: es el
-            // único punto de la app donde un 401 no implica sesión expirada.
             val error = fallo.error
             throw if (error is ErrorApi.NoAutorizado) {
                 ErrorDeApi(ErrorApi.CredencialesInvalidas(error.mensaje))
@@ -57,7 +42,6 @@ class AuthRepositorioRemoto(
                 cliente.clearAuthTokens()
             }
         } catch (fallo: ErrorDeApi) {
-            // El token guardado ya no sirve: se descarta y se vuelve al login.
             if (fallo.error is ErrorApi.NoAutorizado || fallo.error is ErrorApi.SesionExpirada) {
                 almacen.borrarToken()
                 cliente.clearAuthTokens()
