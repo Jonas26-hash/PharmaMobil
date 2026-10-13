@@ -9,11 +9,14 @@ import io.ktor.utils.io.errors.IOException
 import kotlinx.coroutines.test.runTest
 import pe.edu.upeu.pharmamobil.domain.ErrorApi
 import pe.edu.upeu.pharmamobil.domain.ErrorDeApi
+import pe.edu.upeu.pharmamobil.domain.esFalloDeAutenticacion
 import pe.edu.upeu.pharmamobil.domain.mensajeParaUsuario
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 /**
  * Cada error HTTP y de transporte debe llegar al dominio como un [ErrorApi]
@@ -240,6 +243,53 @@ class TraduccionErrorApiTest {
                 503
             ),
             error
+        )
+    }
+
+    @Test
+    fun un401SeTraduceANoAutorizadoConElMensajeDelServidor() = runTest {
+        val error = errorAlObtener(
+            HttpStatusCode.Unauthorized,
+            """{"status":401,"error":"Unauthorized","message":"La sesión no es válida o ha expirado"}"""
+        )
+
+        assertEquals(
+            ErrorApi.NoAutorizado("La sesión no es válida o ha expirado"),
+            error
+        )
+    }
+
+    @Test
+    fun un403SeTraduceAProhibidoYNoConfundeConSesionExpirada() = runTest {
+        val error = errorAlObtener(
+            HttpStatusCode.Forbidden,
+            """{"status":403,"error":"Forbidden","message":"No tienes permiso para esta operación"}"""
+        )
+
+        assertEquals(
+            ErrorApi.Prohibido("No tienes permiso para esta operación"),
+            error
+        )
+        assertFalse(error.esFalloDeAutenticacion)
+    }
+
+    @Test
+    fun losErroresDeAutenticacionSeReconocenParaMostrarElMensajeAdecuado() {
+        assertTrue(ErrorApi.NoAutorizado("x").esFalloDeAutenticacion)
+        assertTrue(ErrorApi.CredencialesInvalidas("x").esFalloDeAutenticacion)
+        assertTrue(ErrorApi.SesionExpirada("x").esFalloDeAutenticacion)
+
+        assertEquals(
+            "Usuario o contraseña incorrectos.",
+            ErrorApi.CredencialesInvalidas("").mensajeParaUsuario()
+        )
+        assertEquals(
+            "Tu sesión expiró. Inicia sesión de nuevo.",
+            ErrorApi.SesionExpirada("").mensajeParaUsuario()
+        )
+        assertEquals(
+            "No tienes permisos para realizar esta operación.",
+            ErrorApi.Prohibido("").mensajeParaUsuario()
         )
     }
 
