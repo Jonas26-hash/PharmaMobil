@@ -78,20 +78,20 @@ fun DetalleVentaResponseDto.aDominio(): DetalleVenta = DetalleVenta(
 // ---------------------------------------------------------------------------
 
 fun Credenciales.aRemoto(): LoginRequestDto = LoginRequestDto(
-    usuario = usuario,
-    contrasena = contrasena
+    username = usuario,
+    password = contrasena
 )
 
 fun LoginResponseDto.aDominio(): Sesion = Sesion(
     token = token,
-    usuario = usuario,
+    usuario = username,
     nombreCompleto = nombreCompleto,
     permisos = permisos.toSet()
 )
 
 fun UsuarioResponseDto.aDominio(token: String): Sesion = Sesion(
     token = token,
-    usuario = usuario,
-    nombreCompleto = nombreCompleto,
+    usuario = username,
+    nombreCompleto = empleadoNombre,
     permisos = permisos.toSet()
 )

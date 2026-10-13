@@ -13,9 +13,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Verifica que [AuthApi] habla el contrato de autenticación esperado de
- * pharmaSoft sin tocar la red:
- *  - POST /api/v1/auth/login con el cuerpo de credenciales y SIN Authorization
+ * Verifica que [AuthApi] habla el contrato de autenticación real de pharmaSoft
+ * sin tocar la red:
+ *  - POST /api/v1/auth/login con { username, password } y SIN Authorization
  *  - GET /api/v1/auth/me con la cabecera Authorization del token guardado
  */
 class AuthApiTest {
@@ -23,11 +23,11 @@ class AuthApiTest {
     private val json = headersOf(HttpHeaders.ContentType, "application/json")
 
     private val loginJson = """
-        {"token":"tok-123","usuario":"admin","nombreCompleto":"Ada Admin","permisos":["productos:listar","productos:registrar"]}
+        {"token":"tok-123","tipo":"Bearer","expiraEnSegundos":3600,"username":"admin","nombreCompleto":"Ada Admin","roles":["ADMIN"],"permisos":["CATALOGO_LEER","CATALOGO_ESCRIBIR"]}
     """.trimIndent()
 
     private val perfilJson = """
-        {"usuario":"vendedor","nombreCompleto":"Vera Vendedora","permisos":["clientes:listar","ventas:registrar"]}
+        {"id":2,"username":"vendedor","empleadoNombre":"Vera Vendedora","cargo":"Vendedora","roles":["VENDEDOR"],"permisos":["CLIENTES_LEER","VENTAS_REGISTRAR"]}
     """.trimIndent()
 
     @Test
@@ -49,16 +49,18 @@ class AuthApiTest {
         )
 
         val resultado = AuthApi(client).iniciarSesion(
-            LoginRequestDto(usuario = "admin", contrasena = "secreta")
+            LoginRequestDto(username = "admin", password = "Admin123")
         )
 
         assertTrue(ruta.endsWith("/auth/login"), "raíz real: $ruta")
         assertEquals(HttpMethod.Post.value, metodo)
-        assertTrue(cuerpo.contains("\"usuario\":\"admin\""))
-        assertTrue(cuerpo.contains("\"contrasena\":\"secreta\""))
+        assertTrue(cuerpo.contains("\"username\":\"admin\""))
+        assertTrue(cuerpo.contains("\"password\":\"Admin123\""))
         assertTrue(autorizacion.isNullOrBlank(), "el login NO debe llevar token: $autorizacion")
         assertEquals("tok-123", resultado.token)
-        assertEquals(setOf("productos:listar", "productos:registrar"), resultado.permisos.toSet())
+        assertEquals("Bearer", resultado.tipo)
+        assertEquals(3600L, resultado.expiraEnSegundos)
+        assertEquals(setOf("CATALOGO_LEER", "CATALOGO_ESCRIBIR"), resultado.permisos.toSet())
     }
 
     @Test
@@ -80,8 +82,9 @@ class AuthApiTest {
 
         assertTrue(ruta.endsWith("/auth/me"), "raíz real: $ruta")
         assertEquals("Bearer tok-9", autorizacion)
-        assertEquals("Vera Vendedora", resultado.nombreCompleto)
-        assertEquals(listOf("clientes:listar", "ventas:registrar"), resultado.permisos)
+        assertEquals("vendedor", resultado.username)
+        assertEquals("Vera Vendedora", resultado.empleadoNombre)
+        assertEquals(listOf("CLIENTES_LEER", "VENTAS_REGISTRAR"), resultado.permisos)
     }
 
     @Test

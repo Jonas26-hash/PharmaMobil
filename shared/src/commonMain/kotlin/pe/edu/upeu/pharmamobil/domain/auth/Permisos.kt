@@ -4,34 +4,35 @@ package pe.edu.upeu.pharmamobil.domain.auth
  * Nombres de permisos que la aplicación consulta para mostrar u ocultar
  * acciones.
  *
- * IMPORTANTE (limitación verificada): el backend `pharmaSoft` real **no**
- * implementa autenticación ni publica una lista de permisos, así que estos
- * identificadores NO han podido confirmarse contra el servidor. Se declaran
- * aquí como el contrato esperado por la guía de la sesión 10 y deben
- * contrastarse con el backend cuando éste exponga `GET /auth/me`.
+ * El backend `pharmaSoft` real (Spring Security + JWT) publica la lista de
+ * `permisos` en `POST /auth/login` y `GET /auth/me`; estos identificadores son
+ * los que emite `PermisosPorRol` y están confirmados contra el servidor.
  *
- * La matriz de referencia de la guía es:
+ * Matriz de permisos de pharmaSoft:
  *
- * | Operación          | admin | vendedor | almacen |
- * |--------------------|-------|----------|---------|
- * | Listar productos   | sí    | sí       | sí      |
- * | Registrar producto | sí    | no       | sí      |
- * | Listar clientes    | sí    | sí       | no      |
- * | Registrar venta    | sí    | sí       | no      |
- * | Ver reportes       | sí    | no       | no      |
- * | Consultar /auth/me | sí    | sí       | sí      |
+ * | Operación                                | ADMIN | VENDEDOR | ALMACENERO |
+ * |------------------------------------------|-------|----------|------------|
+ * | CATALOGO_LEER (productos y categorías)   | sí    | sí       | sí         |
+ * | CATALOGO_ESCRIBIR (productos y categorías)| sí   | no       | sí         |
+ * | CLIENTES_LEER                            | sí    | sí       | no         |
+ * | CLIENTES_ESCRIBIR                        | sí    | sí       | no         |
+ * | VENTAS_LEER                              | sí    | sí       | no         |
+ * | VENTAS_REGISTRAR                         | sí    | sí       | no         |
+ * | REPORTES_VER                             | sí    | no       | no         |
+ * | USUARIOS_ADMINISTRAR                     | sí    | no       | no         |
  */
 object Permisos {
 
-    const val PRODUCTOS_LISTAR = "productos:listar"
-    const val PRODUCTOS_REGISTRAR = "productos:registrar"
+    const val CATALOGO_LEER = "CATALOGO_LEER"
+    const val CATALOGO_ESCRIBIR = "CATALOGO_ESCRIBIR"
 
-    const val CLIENTES_LISTAR = "clientes:listar"
+    const val CLIENTES_LEER = "CLIENTES_LEER"
+    const val CLIENTES_ESCRIBIR = "CLIENTES_ESCRIBIR"
 
-    const val VENTAS_REGISTRAR = "ventas:registrar"
+    const val VENTAS_LEER = "VENTAS_LEER"
+    const val VENTAS_REGISTRAR = "VENTAS_REGISTRAR"
 
-    const val REPORTES_VER = "reportes:ver"
+    const val REPORTES_VER = "REPORTES_VER"
 
-    /** Permiso implícito: cualquier sesión autenticada puede consultar su perfil. */
-    const val PERFIL_CONSULTAR = "auth:me"
+    const val USUARIOS_ADMINISTRAR = "USUARIOS_ADMINISTRAR"
 }

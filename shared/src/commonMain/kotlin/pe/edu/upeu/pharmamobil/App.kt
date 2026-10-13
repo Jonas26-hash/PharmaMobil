@@ -86,8 +86,8 @@ private data class Destino(
 
 private val DESTINOS = listOf(
     Destino(Screen.Inicio, "Inicio", Icons.Default.Home),
-    Destino(Screen.Productos, "Productos", Icons.Default.Medication, Permisos.PRODUCTOS_LISTAR),
-    Destino(Screen.Clientes, "Clientes", Icons.Default.Person, Permisos.CLIENTES_LISTAR),
+    Destino(Screen.Productos, "Productos", Icons.Default.Medication, Permisos.CATALOGO_LEER),
+    Destino(Screen.Clientes, "Clientes", Icons.Default.Person, Permisos.CLIENTES_LEER),
     Destino(Screen.Pedidos, "Pedidos", Icons.Default.ShoppingCart)
 )
 
@@ -303,7 +303,7 @@ private fun ContenidoAutenticado(
                                 onEditarClick = { productoId ->
                                     pantallaActual = Screen.RegistrarProducto(productoId)
                                 },
-                                puedeRegistrar = sesion.puede(Permisos.PRODUCTOS_REGISTRAR)
+                                puedeRegistrar = sesion.puede(Permisos.CATALOGO_ESCRIBIR)
                             )
 
                         Screen.Clientes ->
