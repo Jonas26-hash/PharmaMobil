@@ -9,6 +9,8 @@ Aplicación multiplataforma desarrollada con **Kotlin Multiplatform (KMP)** y **
 | Kotlin Multiplatform | Lógica compartida en `commonMain` (Android + iOS) |
 | Compose Multiplatform | Interfaz de usuario declarativa |
 | Ktor Client 3.5.2 | Cliente HTTP con Content Negotiation JSON, logging y timeouts |
+| Ktor Auth (Bearer) | Autenticación por token: adjunta `Authorization` y detecta el 401 |
+| Android Keystore / iOS Keychain | Almacenamiento cifrado del token de sesión |
 | OkHttp / Darwin | Motores HTTP por plataforma (`OkHttp` en Android, `NSURLSession` en iOS) |
 | kotlinx.serialization | Serialización de los DTO del contrato REST |
 | Coroutines | Operaciones `suspend` reales contra el backend |
@@ -30,12 +32,17 @@ shared/src/commonMain/kotlin/pe/edu/upeu/pharmamobil/
 ├── domain/
 │   ├── model/                      ← Producto, Cliente, Categoria, Venta, DetalleVenta
 │   ├── repository/                 ← Contratos (ProductoRepository, ClienteRepository, CategoriaRepository)
+│   ├── auth/                       ← Credenciales, Sesion (permisos) y AuthRepository
+│   ├── security/                   ← Contrato AlmacenSeguro (guardar/leer token)
 │   └── usecase/                    ← Validación y lógica de negocio + Result<T>
 ├── data/
 │   ├── remote/                     ← Cliente HTTP de Ktor: DTO, mappers, APIs, repositorios remotos
+│   ├── auth/                       ← GestorSesion (StateFlow<Sesion?>)
+│   ├── security/                   ← AlmacenSeguroAndroid (Keystore) / AlmacenSeguroKeychain (iOS)
 │   └── repository/                 ← Implementaciones en memoria (referencia para pruebas)
 └── presentation/
     ├── components/                 ← EstadoVacio, MensajeExito, ValidatedTextField
+    ├── login/                      ← LoginUiState, LoginViewModel y LoginScreen
     ├── inicio/                     ← Pantalla de inicio con accesos rápidos
     ├── producto/                   ← Listado con buscador + formulario de registro/edición
     └── cliente/                    ← Listado con buscador + formulario de registro/edición
@@ -137,12 +144,44 @@ data class Categoria(
 - Estados tipados en cada pantalla: `Cargando`, `SinProductos` / `SinClientes`, `ConProductos` / `ConClientes`, `Error` (solo uno activo, el compilador obliga a resolverlos con `when`).
 - Validación visible por campo, mensajes de éxito (que además devuelven al listado) y estados vacíos con icono.
 
+## Autenticación y sesión (Sesión 10)
+
+La app arranca en un **login** y solo muestra el contenido cuando hay una sesión válida. El token se guarda **cifrado** en el dispositivo y se adjunta automáticamente a cada petición protegida.
+
+### Flujo
+
+1. `LoginViewModel` recibe usuario y contraseña y llama a `AuthRepository.iniciarSesion(Credenciales)`.
+2. `AuthRepositorioRemoto` hace `POST /auth/login`; si el 401 vuelve, se traduce a `CredencialesInvalidas` («Usuario o contraseña incorrectos»).
+3. Con la respuesta se construye el `Sesion(token, usuario, rol, permisos)` y se guarda el **token** en `AlmacenSeguro` (Keystore en Android, Keychain en iOS).
+4. `GestorSesion` expone `StateFlow<Sesion?>`; `App.kt` lo observa y conmuta entre `LoginScreen` y `ContenidoAutenticado`.
+5. Al iniciar la app, `recuperarSesion()` lee el token del almacén y pide `GET /auth/me` para reconstruir la sesión (si el token caducó, vuelve al login).
+6. **Cerrar sesión** limpia la sesión en memoria y borra el token del almacén.
+
+### Cliente HTTP
+
+`HttpClientFactory.crearHttpClient(motor, leerToken, alExpirarSesion)`:
+
+- `install(Auth) { bearer { loadTokens { leerToken()?.let { BearerTokens(it, null) } }; refreshTokens { null } } }` adjunta el `Bearer` en cada petición.
+- `Logging` **oculta** la cabecera `Authorization` para no filtrar el token en los logs.
+- `HttpResponseValidator`: un **401** en una ruta que no sea `/auth/login` dispara `alExpirarSesion()` (la app vuelve al login); un **403** conserva la sesión y se muestra como «No tienes permisos para esta acción».
+
+### Permisos en la interfaz
+
+`Sesion.puede(permiso)` / `GestorSesion.puede(permiso)` filtran el menú y los botones:
+
+- El drawer solo muestra los destinos para los que el rol tiene permiso.
+- `ProductoScreen` y `ClienteScreen` reciben `puedeRegistrar`: si el rol no tiene `productos:registrar` / `clientes:registrar`, el botón de registro no aparece.
+
+Los nombres de permiso (`productos:listar`, `productos:registrar`, `clientes:listar`, `clientes:registrar`, `pedidos:ver`) están centralizados en `domain/auth/Permisos.kt`.
+
+> **Alcance y limitación conocida:** el backend **pharmaSoft** (hasta la fecha de esta entrega) **no expone endpoints de autenticación** (`/auth/login`, `/auth/me`) ni roles. Por eso la integración se verificó **de extremo a extremo contra un servidor mock local** y con pruebas de red (`MockEngine`); los casos que dependen del backend real (login real, matriz de roles, caducidad/refresco de token) quedan marcados **PENDIENTE** en la evidencia de la sesión. El contrato REST de auth sigue la forma estándar `{ token, usuario, rol, permisos }` para que, cuando el backend lo implemente, la app solo cambie la URL.
+
 ## Inyección de dependencias (Koin)
 
-- `dataModule`: motor HTTP y `HttpClient` como `single` (uno solo en toda la app), APIs, repositorios remotos.
+- `dataModule`: motor HTTP, `AlmacenSeguro`, `GestorSesion` y `HttpClient` como `single` (uno solo en toda la app), APIs, repositorios remotos y `AuthRepository`.
 - `domainModule`: casos de uso (`factory`).
-- `presentationModule`: los cuatro ViewModels con `viewModel { }` (dos de listado y dos de formulario).
-- `initKoin { }` arranca Koin desde `MainApplication` (Android) y desde `iOSApp.swift` (iOS).
+- `presentationModule`: los ViewModels (`viewModel { }`), incluido `LoginViewModel`.
+- `initKoin { }` arranca Koin desde `MainApplication` (Android) y desde `iOSApp.swift` (iOS). El `AlmacenSeguro` se aporta desde el módulo de plataforma (`PlatformModule.android.kt` en Android, `KoinInit.kt` en iOS).
 
 ## Conectividad REST
 
@@ -193,12 +232,16 @@ Endpoints que consume la app:
 | POST/PUT/DELETE | `/clientes`, `/clientes/{id}` | Registro, actualización y baja |
 | GET | `/categorias` | Catálogo para el selector del formulario |
 | POST | `/ventas` | Venta (`{ clienteId, detalles: [{ productoId, cantidad }] }`) |
+| POST | `/auth/login` | Autenticación: devuelve `{ token, usuario, rol, permisos }` (contrato previsto; backend **PENDIENTE**) |
+| GET | `/auth/me` | Reconstruye la sesión desde el token (contrato previsto; backend **PENDIENTE**) |
 
 ## Pruebas
 
-- `commonTest` cubre modelos, validaciones, casos de uso (éxito y error), repositorios en memoria, fakes, los cuatro ViewModels, el filtro de los listados, el formato de precio, los mappers DTO ↔ dominio, las cuatro APIs con `MockEngine` y el grafo de Koin completo.
-- Ejecución: `./gradlew :shared:testAndroidHostTest` (**118 casos, 0 fallos**).
+- `commonTest` cubre modelos, validaciones, casos de uso (éxito y error), repositorios en memoria, fakes, los ViewModels (incluido `LoginViewModel`), el filtro de los listados, el formato de precio, los mappers DTO ↔ dominio, las APIs con `MockEngine` (productos, clientes, categorías, ventas y **auth**) y el grafo de Koin completo.
+- Ejecución: `./gradlew :shared:testAndroidHostTest` (**159 casos, 0 fallos**).
 - Las pruebas de red no salen a internet: `crearHttpClient(MockEngine { … })` reproduce las respuestas y comprueba rutas, verbos, query de paginación y cuerpo JSON.
+- `MensajesDeErrorTest`: cubre que 401 → `NoAutorizado`/`CredencialesInvalidas` y 403 → `Prohibido`, y que `esFalloDeAutenticacion` los reconoce.
+- `SesionTest` fija la lógica de permisos (`puede`/`puedeAlguno`) y `AuthApiTest` / `AuthRepositorioRemotoTest` verifican el login y `/auth/me` contra `MockEngine`, incluido el mapeo del 401 a credenciales inválidas.
 - `ListadoDeActivosTest` fija el comportamiento de la baja lógica: `DELETE` devuelve 204 pero el registro queda con `estado = false`, así que el repositorio filtra los desactivados al listar.
 
 ### Verificación contra el backend real
@@ -250,7 +293,7 @@ PharmaMobil/
 | Kotlin | 2.4.10 | Lenguaje |
 | Compose Multiplatform | 1.11.1 | UI declarativa |
 | Material3 | 1.11.0-alpha07 | Componentes Material Design |
-| Ktor Client | 3.5.2 | Cliente HTTP (core, content-negotiation, logging, kotlinx-json) |
+| Ktor Client | 3.5.2 | Cliente HTTP (core, content-negotiation, logging, auth, kotlinx-json) |
 | Ktor Mock | 3.5.2 | `MockEngine` en `commonTest` |
 | Ktor OkHttp / Darwin | 3.5.2 | Motores HTTP de Android e iOS |
 | Lifecycle ViewModel | 2.11.0-beta01 | ViewModel en commonMain |

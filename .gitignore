@@ -12,6 +12,8 @@ captures
 *.png
 *.jpg
 *.jpeg
+# Logs de error en tiempo de ejecución de los servidores mock de evidencia
+*.err.log
 *.apk
 *.aab
 .externalNativeBuild
