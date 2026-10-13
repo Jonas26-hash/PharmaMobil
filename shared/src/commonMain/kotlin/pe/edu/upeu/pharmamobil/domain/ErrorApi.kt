@@ -47,7 +47,33 @@ sealed interface ErrorApi {
 
     /** La espera agotó el tiempo configurado en [ErrorApi]. */
     data class TiempoAgotado(val mensaje: String) : ErrorApi
+
+    /**
+     * HTTP 401 tal como lo entrega la capa de datos, antes de darle contexto.
+     *
+     * Es el estado bruto: la autenticación se tradujo al dominio pero todavía
+     * no se sabe si el 401 vino de un intento de login (credenciales
+     * incorrectas) o de una operación protegida (sesión expirada). El
+     * repositorio de autenticación y el manejador de sesión lo convierten en
+     * [CredencialesInvalidas] o [SesionExpirada] según el caso.
+     */
+    data class NoAutorizado(val mensaje: String) : ErrorApi
+
+    /** HTTP 403: autenticado, pero sin permiso para la operación. */
+    data class Prohibido(val mensaje: String) : ErrorApi
+
+    /** 401 durante el login: usuario o contraseña incorrectos. */
+    data class CredencialesInvalidas(val mensaje: String) : ErrorApi
+
+    /** 401 en una operación protegida: la sesión ya no es válida. */
+    data class SesionExpirada(val mensaje: String) : ErrorApi
 }
+
+/** `true` si el error representa una autenticación caducada o inválida. */
+val ErrorApi.esFalloDeAutenticacion: Boolean
+    get() = this is ErrorApi.NoAutorizado ||
+        this is ErrorApi.CredencialesInvalidas ||
+        this is ErrorApi.SesionExpirada
 
 /**
  * Mensaje listo para mostrar al usuario, con una redacción distinta por caso.
@@ -79,6 +105,18 @@ fun ErrorApi.mensajeParaUsuario(): String = when (this) {
 
     is ErrorApi.TiempoAgotado ->
         "La solicitud tardó demasiado tiempo. Inténtalo de nuevo."
+
+    is ErrorApi.NoAutorizado ->
+        mensaje.ifBlank { "Tu sesión ya no es válida. Inicia sesión de nuevo." }
+
+    is ErrorApi.Prohibido ->
+        mensaje.ifBlank { "No tienes permisos para realizar esta operación." }
+
+    is ErrorApi.CredencialesInvalidas ->
+        mensaje.ifBlank { "Usuario o contraseña incorrectos." }
+
+    is ErrorApi.SesionExpirada ->
+        mensaje.ifBlank { "Tu sesión expiró. Inicia sesión de nuevo." }
 }
 
 /** `true` si el error viene del detalle por campo del servidor. */

@@ -42,7 +42,8 @@ fun ProductoScreen(
     viewModel: ProductoViewModel,
     onRegistrarClick: () -> Unit,
     onEditarClick: (Long) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    puedeRegistrar: Boolean = true
 ) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -78,15 +79,17 @@ fun ProductoScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Button(
-            onClick = onRegistrarClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null
-            )
-            Text("Registrar producto")
+        if (puedeRegistrar) {
+            Button(
+                onClick = onRegistrarClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null
+                )
+                Text("Registrar producto")
+            }
         }
 
         Box(

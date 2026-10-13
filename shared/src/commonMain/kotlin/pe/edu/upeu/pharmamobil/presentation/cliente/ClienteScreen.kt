@@ -42,7 +42,8 @@ fun ClienteScreen(
     viewModel: ClienteViewModel,
     onRegistrarClick: () -> Unit,
     onEditarClick: (Long) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    puedeRegistrar: Boolean = true
 ) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -74,15 +75,17 @@ fun ClienteScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Button(
-            onClick = onRegistrarClick,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = null
-            )
-            Text("Registrar cliente")
+        if (puedeRegistrar) {
+            Button(
+                onClick = onRegistrarClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null
+                )
+                Text("Registrar cliente")
+            }
         }
 
         Box(

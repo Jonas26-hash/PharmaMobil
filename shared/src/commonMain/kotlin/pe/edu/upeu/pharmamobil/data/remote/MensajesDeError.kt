@@ -115,6 +115,12 @@ private suspend fun ResponseException.aErrorApiDesdeRespuesta(): ErrorApi {
         HttpStatusCode.NotFound.value ->
             ErrorApi.NoEncontrado(mensaje)
 
+        HttpStatusCode.Unauthorized.value ->
+            ErrorApi.NoAutorizado(mensaje)
+
+        HttpStatusCode.Forbidden.value ->
+            ErrorApi.Prohibido(mensaje)
+
         HttpStatusCode.Conflict.value ->
             ErrorApi.Conflicto(mensaje)
 
@@ -147,6 +153,12 @@ private fun mensajePorDefecto(codigo: Int): String = when {
 
     codigo == HttpStatusCode.Conflict.value ->
         "La operación entra en conflicto con el estado actual."
+
+    codigo == HttpStatusCode.Unauthorized.value ->
+        "No autorizado. La sesión no es válida o las credenciales son incorrectas."
+
+    codigo == HttpStatusCode.Forbidden.value ->
+        "No tienes permisos para realizar esta operación."
 
     codigo >= 500 ->
         "El servidor no pudo completar la operación. Inténtalo más tarde."

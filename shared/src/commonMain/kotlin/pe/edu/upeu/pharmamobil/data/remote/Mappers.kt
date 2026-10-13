@@ -1,5 +1,7 @@
 package pe.edu.upeu.pharmamobil.data.remote
 
+import pe.edu.upeu.pharmamobil.domain.auth.Credenciales
+import pe.edu.upeu.pharmamobil.domain.auth.Sesion
 import pe.edu.upeu.pharmamobil.domain.model.Categoria
 import pe.edu.upeu.pharmamobil.domain.model.Cliente
 import pe.edu.upeu.pharmamobil.domain.model.DetalleVenta
@@ -69,4 +71,27 @@ fun DetalleVentaResponseDto.aDominio(): DetalleVenta = DetalleVenta(
     cantidad = cantidad,
     precioUnitario = precio,
     subtotal = subtotal
+)
+
+// ---------------------------------------------------------------------------
+// Autenticación
+// ---------------------------------------------------------------------------
+
+fun Credenciales.aRemoto(): LoginRequestDto = LoginRequestDto(
+    usuario = usuario,
+    contrasena = contrasena
+)
+
+fun LoginResponseDto.aDominio(): Sesion = Sesion(
+    token = token,
+    usuario = usuario,
+    nombreCompleto = nombreCompleto,
+    permisos = permisos.toSet()
+)
+
+fun UsuarioResponseDto.aDominio(token: String): Sesion = Sesion(
+    token = token,
+    usuario = usuario,
+    nombreCompleto = nombreCompleto,
+    permisos = permisos.toSet()
 )
