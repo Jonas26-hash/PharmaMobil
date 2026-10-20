@@ -14,6 +14,7 @@ import pe.edu.upeu.pharmamobil.domain.tieneErroresPorCampo
 import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ObservarProductosUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ObtenerUltimaSincronizacionUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.SincronizarProductosUseCase
 import kotlin.test.AfterTest
@@ -45,7 +46,8 @@ class ProductoViewModelTest {
         sincronizarProductos = SincronizarProductosUseCase(repositorio),
         registrarProducto = RegistrarProductoUseCase(repositorio),
         actualizarProducto = ActualizarProductoUseCase(repositorio),
-        eliminarProducto = EliminarProductoUseCase(repositorio)
+        eliminarProducto = EliminarProductoUseCase(repositorio),
+        obtenerUltimaSincronizacion = ObtenerUltimaSincronizacionUseCase(repositorio)
     )
 
     @Test
@@ -203,6 +205,40 @@ class ProductoViewModelTest {
         job.join()
 
         assertEquals(ProductoUiState.Operacion.Inactiva, viewModel.uiState.value.operacion)
+    }
+
+    @Test
+    fun sinSincronizacionPreviaMuestraNuncaSeHaSincronizado() = runTest {
+
+        val viewModel = nuevoViewModel()
+
+        assertEquals("Nunca se ha sincronizado", viewModel.uiState.value.antiguedad)
+    }
+
+    @Test
+    fun trasUnaSincronizacionExitosaLaAntiguedadDejaDeSerNunca() = runTest {
+
+        val repositorio = FakeProductoRepository()
+        val viewModel = nuevoViewModel(repositorio)
+
+        assertEquals("Nunca se ha sincronizado", viewModel.uiState.value.antiguedad)
+
+        viewModel.sincronizar()
+
+        assertEquals("Actualizado hace menos de un minuto", viewModel.uiState.value.antiguedad)
+    }
+
+    @Test
+    fun siLaSincronizacionFallaLaAntiguedadNoCambia() = runTest {
+
+        val repositorio = FakeProductoRepository().apply {
+            fallaAlSincronizar = IllegalStateException("Sin conexión")
+        }
+        val viewModel = nuevoViewModel(repositorio)
+
+        viewModel.sincronizar()
+
+        assertEquals("Nunca se ha sincronizado", viewModel.uiState.value.antiguedad)
     }
 
     @Test

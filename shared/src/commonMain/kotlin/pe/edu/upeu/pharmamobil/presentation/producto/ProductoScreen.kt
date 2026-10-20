@@ -60,7 +60,11 @@ fun ProductoScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 
-        EncabezadoInventario(uiState.fase)
+        EncabezadoInventario(
+            fase = uiState.fase,
+            sincronizando = uiState.sincronizando,
+            antiguedad = uiState.antiguedad
+        )
 
         AvisoRed(
             sincronizando = uiState.sincronizando,
@@ -231,27 +235,44 @@ private fun AvisoOperacion(operacion: ProductoUiState.Operacion) {
 
 @Composable
 private fun EncabezadoInventario(
-    fase: ProductoUiState.Fase
+    fase: ProductoUiState.Fase,
+    sincronizando: Boolean,
+    antiguedad: String?
 ) {
 
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
 
-        Text(
-            text = "Inventario",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.weight(1f)
-        )
-
-        if (fase is ProductoUiState.Fase.ConProductos) {
-
-            val cantidad = fase.productos.size
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
 
             Text(
-                text = if (cantidad == 1) "1 producto" else "$cantidad productos",
-                style = MaterialTheme.typography.labelLarge,
+                text = "Inventario",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f)
+            )
+
+            if (fase is ProductoUiState.Fase.ConProductos) {
+
+                val cantidad = fase.productos.size
+
+                Text(
+                    text = if (cantidad == 1) "1 producto" else "$cantidad productos",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        if (!antiguedad.isNullOrBlank()) {
+
+            Text(
+                text = if (sincronizando) "Sincronizando…" else antiguedad,
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }

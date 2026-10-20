@@ -7,28 +7,34 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import pe.edu.upeu.pharmamobil.ahoraEnMilisegundos
 import pe.edu.upeu.pharmamobil.domain.ErrorApi
 import pe.edu.upeu.pharmamobil.domain.ErrorDeApi
 import pe.edu.upeu.pharmamobil.domain.mensajeParaUsuario
 import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ObservarProductosUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ObtenerUltimaSincronizacionUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ProductoInvalidoException
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.SincronizarProductosUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.antiguedadDeDatos
 
 class ProductoViewModel(
     private val observarProductos: ObservarProductosUseCase,
     private val sincronizarProductos: SincronizarProductosUseCase,
     private val registrarProducto: RegistrarProductoUseCase? = null,
     private val actualizarProducto: ActualizarProductoUseCase? = null,
-    private val eliminarProducto: EliminarProductoUseCase? = null
+    private val eliminarProducto: EliminarProductoUseCase? = null,
+    private val obtenerUltimaSincronizacion: ObtenerUltimaSincronizacionUseCase? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProductoUiState())
     val uiState: StateFlow<ProductoUiState> = _uiState.asStateFlow()
 
     init {
+        refrescarAntiguedad()
+
         viewModelScope.launch {
             observarProductos().collect { productos ->
                 val fase = if (productos.isEmpty()) {
@@ -55,6 +61,7 @@ class ProductoViewModel(
 
             sincronizarProductos().fold(
                 onSuccess = {
+                    refrescarAntiguedad()
                     _uiState.update {
                         it.copy(sincronizando = false, avisoRed = null)
                     }
@@ -153,6 +160,13 @@ class ProductoViewModel(
     fun limpiarOperacion() {
         _uiState.update {
             it.copy(operacion = ProductoUiState.Operacion.Inactiva)
+        }
+    }
+
+    private fun refrescarAntiguedad() {
+        val ultimo = obtenerUltimaSincronizacion?.invoke()
+        _uiState.update {
+            it.copy(antiguedad = antiguedadDeDatos(ultimo, ahoraEnMilisegundos()))
         }
     }
 }

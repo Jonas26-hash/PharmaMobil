@@ -119,6 +119,8 @@ class ProductoRepositorioEnMemoria : ProductoRepository {
         delay(RETARDO_LISTADO_MS)
     }
 
+    override fun ultimaSincronizacion(): Long? = null
+
     override fun observar(): Flow<List<Producto>> {
         return _productos.asStateFlow()
     }

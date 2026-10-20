@@ -14,6 +14,8 @@ import pe.edu.upeu.pharmamobil.data.local.CategoriaRepositorioOffline
 import pe.edu.upeu.pharmamobil.data.local.ClienteRepositorioOffline
 import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriver
 import pe.edu.upeu.pharmamobil.data.local.ProductoRepositorioOffline
+import pe.edu.upeu.pharmamobil.data.local.RegistroDeSincronizacion
+import pe.edu.upeu.pharmamobil.data.local.RegistroDeSincronizacionFalso
 import pe.edu.upeu.pharmamobil.data.local.crearDriverDePrueba
 import pe.edu.upeu.pharmamobil.domain.connectivity.MonitorDeConectividad
 import pe.edu.upeu.pharmamobil.domain.repository.CategoriaRepository
@@ -30,6 +32,7 @@ import pe.edu.upeu.pharmamobil.domain.usecase.ObservarClientesUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ObservarProductosUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ObtenerClienteUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ObtenerProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ObtenerUltimaSincronizacionUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarClienteUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarVentaUseCase
@@ -70,6 +73,7 @@ class AppModuleTest {
                     }
                 }
                 single<MonitorDeConectividad> { MonitorDeConectividadFalso() }
+                single<RegistroDeSincronizacion> { RegistroDeSincronizacionFalso() }
             }
         )
     }.koin
@@ -111,6 +115,7 @@ class AppModuleTest {
         koin.get<ListarProductosUseCase>()
         koin.get<ObservarProductosUseCase>()
         koin.get<SincronizarProductosUseCase>()
+        koin.get<ObtenerUltimaSincronizacionUseCase>()
         koin.get<RegistrarVentaUseCase>()
 
         koin.get<RegistrarClienteUseCase>()

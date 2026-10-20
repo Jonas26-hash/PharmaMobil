@@ -47,6 +47,8 @@ class ProductoRepositorioRemoto(
         Unit
     }
 
+    override fun ultimaSincronizacion(): Long? = null
+
     override fun observar(): Flow<List<Producto>> = flow {
         emit(listar())
     }

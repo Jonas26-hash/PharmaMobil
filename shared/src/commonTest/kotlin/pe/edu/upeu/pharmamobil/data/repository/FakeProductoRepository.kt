@@ -3,6 +3,7 @@ package pe.edu.upeu.pharmamobil.data.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import pe.edu.upeu.pharmamobil.ahoraEnMilisegundos
 import pe.edu.upeu.pharmamobil.domain.model.DetalleVenta
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.model.Venta
@@ -19,6 +20,7 @@ class FakeProductoRepository(
     var fallaAlObtenerPorId: Throwable? = null
     var fallaAlVender: Throwable? = null
     var fallaAlSincronizar: Throwable? = null
+    var selloDeSincronizacion: Long? = null
 
     private val _estado = MutableStateFlow(productos.toList())
     private var siguienteId = 1L
@@ -107,7 +109,10 @@ class FakeProductoRepository(
 
     override suspend fun sincronizar() {
         fallaAlSincronizar?.let { throw it }
+        selloDeSincronizacion = ahoraEnMilisegundos()
     }
+
+    override fun ultimaSincronizacion(): Long? = selloDeSincronizacion
 
     override fun observar(): Flow<List<Producto>> = _estado.asStateFlow()
 }

@@ -1,6 +1,7 @@
 package pe.edu.upeu.pharmamobil.data.local
 
 import kotlinx.coroutines.flow.Flow
+import pe.edu.upeu.pharmamobil.ahoraEnMilisegundos
 import pe.edu.upeu.pharmamobil.data.remote.DetalleVentaRequestDto
 import pe.edu.upeu.pharmamobil.data.remote.ProductoApi
 import pe.edu.upeu.pharmamobil.data.remote.VentaApi
@@ -20,7 +21,8 @@ class ProductoRepositorioOffline(
     private val local: ProductoLocal,
     private val remoto: ProductoApi,
     private val ventaApi: VentaApi,
-    private val conectividad: MonitorDeConectividad
+    private val conectividad: MonitorDeConectividad,
+    private val registroSincronizacion: RegistroDeSincronizacion
 ) : ProductoRepository {
 
     override fun observar(): Flow<List<Producto>> = local.observar()
@@ -83,17 +85,32 @@ class ProductoRepositorioOffline(
 
     override suspend fun sincronizar() {
         alAplicacion {
-            subirPendientes()
+            val falloDeSubida = subirPendientes()
             val remotos = remoto.listar().map { it.aDominio() }.filter { it.activo }
             local.reemplazarSincronizados(remotos)
+            registroSincronizacion.registrarUltimaSincronizacion(ahoraEnMilisegundos())
+            falloDeSubida?.let { throw it }
         }
     }
 
-    private suspend fun subirPendientes() {
+    override fun ultimaSincronizacion(): Long? = registroSincronizacion.ultimaSincronizacion()
+
+    private suspend fun subirPendientes(): Throwable? {
+
+        var primerFallo: Throwable? = null
+
         local.pendientes().forEach { pendiente ->
-            val subido = remoto.registrar(pendiente.aRemoto()).aDominio()
-            local.reemplazarPendiente(pendiente.id, subido)
+            try {
+                val subido = remoto.registrar(pendiente.aRemoto()).aDominio()
+                local.reemplazarPendiente(pendiente.id, subido)
+            } catch (cancelacion: CancellationException) {
+                throw cancelacion
+            } catch (fallo: Throwable) {
+                if (primerFallo == null) primerFallo = fallo
+            }
         }
+
+        return primerFallo
     }
 
     private suspend fun intentar(bloque: suspend () -> Unit) {

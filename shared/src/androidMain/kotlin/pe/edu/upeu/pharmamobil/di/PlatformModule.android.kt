@@ -1,17 +1,25 @@
 package pe.edu.upeu.pharmamobil.di
 
+import android.content.Context
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import pe.edu.upeu.pharmamobil.data.connectivity.MonitorDeConectividadAndroid
 import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriver
 import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriverAndroid
+import pe.edu.upeu.pharmamobil.data.local.RegistroDeSincronizacion
+import pe.edu.upeu.pharmamobil.data.local.RegistroDeSincronizacionAndroid
 import pe.edu.upeu.pharmamobil.data.security.AlmacenSeguroAndroid
 import pe.edu.upeu.pharmamobil.domain.connectivity.MonitorDeConectividad
 import pe.edu.upeu.pharmamobil.domain.security.AlmacenSeguro
 
 actual val platformModule: Module = module {
+
     single<AlmacenSeguro> { AlmacenSeguroAndroid(androidContext()) }
     single<CreadorDeDriver> { CreadorDeDriverAndroid(androidContext()) }
     single<MonitorDeConectividad> { MonitorDeConectividadAndroid(androidContext()) }
+    single<RegistroDeSincronizacion> { RegistroDeSincronizacionAndroid(androidContext()) }
+    single<Context> { androidContext() }
 }
+
+internal fun org.koin.core.Koin.contextoDeLaAplicacion(): Context = get<Context>()

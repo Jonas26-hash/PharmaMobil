@@ -60,12 +60,14 @@ class RepositorioOfflineTest {
     private fun repositorioDeProductos(
         db: PharmaDb,
         monitor: MonitorDeConectividadFalso,
-        cliente: HttpClient
+        cliente: HttpClient,
+        registro: RegistroDeSincronizacionFalso = RegistroDeSincronizacionFalso()
     ): ProductoRepositorioOffline = ProductoRepositorioOffline(
         local = ProductoLocal(db),
         remoto = ProductoApi(cliente),
         ventaApi = VentaApi(cliente),
-        conectividad = monitor
+        conectividad = monitor,
+        registroSincronizacion = registro
     )
 
     @Test
@@ -124,7 +126,7 @@ class RepositorioOfflineTest {
 
         assertEquals(-1L, creado.id)
         assertEquals(listOf(-1L), local.pendientes().map { it.id })
-        assertEquals(listOf(-1L), repositorio.listar().map { it.id })
+        assertEquals(listOf(-1L, 1L), repositorio.listar().map { it.id }.sorted())
     }
 
     @Test
@@ -145,8 +147,8 @@ class RepositorioOfflineTest {
 
         val productos = repositorio.observar().first()
 
-        assertEquals(1, productos.size)
-        assertEquals("Jarabe para la tos", productos.first().nombre)
+        assertEquals(2, productos.size)
+        assertEquals("Jarabe para la tos", productos.first { it.pendiente }.nombre)
     }
 
     @Test

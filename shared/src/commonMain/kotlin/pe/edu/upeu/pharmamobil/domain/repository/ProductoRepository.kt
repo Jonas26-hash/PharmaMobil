@@ -20,5 +20,7 @@ interface ProductoRepository {
 
     suspend fun sincronizar()
 
+    fun ultimaSincronizacion(): Long?
+
     fun observar(): Flow<List<Producto>>
 }
