@@ -16,7 +16,8 @@ data class ProductoUi(
     val stockUnidades: Int,
     val requiereReceta: Boolean,
     val activo: Boolean,
-    val requiereReposicion: Boolean
+    val requiereReposicion: Boolean,
+    val pendiente: Boolean = false
 )
 
 data class CategoriaUi(
@@ -36,7 +37,8 @@ fun Producto.aUi(): ProductoUi = ProductoUi(
     stockUnidades = stock,
     requiereReceta = requiereReceta,
     activo = activo,
-    requiereReposicion = requiereReposicion
+    requiereReposicion = requiereReposicion,
+    pendiente = pendiente
 )
 
 fun Categoria.aUi(): CategoriaUi = CategoriaUi(

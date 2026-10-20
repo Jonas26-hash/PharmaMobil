@@ -15,5 +15,7 @@ interface ClienteRepository {
 
     suspend fun obtenerPorId(clienteId: Long): Cliente
 
-    fun observarClientes(): Flow<List<Cliente>>
+    suspend fun sincronizar()
+
+    fun observar(): Flow<List<Cliente>>
 }

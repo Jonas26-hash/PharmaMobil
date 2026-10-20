@@ -1,7 +1,8 @@
 package pe.edu.upeu.pharmamobil.data.repository
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import pe.edu.upeu.pharmamobil.domain.model.DetalleVenta
 import pe.edu.upeu.pharmamobil.domain.model.Producto
 import pe.edu.upeu.pharmamobil.domain.model.Venta
@@ -17,8 +18,14 @@ class FakeProductoRepository(
     var fallaAlListar: Throwable? = null
     var fallaAlObtenerPorId: Throwable? = null
     var fallaAlVender: Throwable? = null
+    var fallaAlSincronizar: Throwable? = null
 
+    private val _estado = MutableStateFlow(productos.toList())
     private var siguienteId = 1L
+
+    private fun publicar() {
+        _estado.value = productos.toList()
+    }
 
     override suspend fun registrar(producto: Producto): Producto {
 
@@ -26,6 +33,7 @@ class FakeProductoRepository(
 
         val guardado = producto.copy(id = siguienteId++)
         productos.add(guardado)
+        publicar()
         return guardado
     }
 
@@ -39,12 +47,14 @@ class FakeProductoRepository(
         }
 
         productos[indice] = producto
+        publicar()
         return producto
     }
 
     override suspend fun eliminar(productoId: Long) {
         fallaAlEliminar?.let { throw it }
         productos.removeAll { it.id == productoId }
+        publicar()
     }
 
     override suspend fun listar(): List<Producto> {
@@ -79,6 +89,7 @@ class FakeProductoRepository(
 
         val actualizado = producto.copy(stock = producto.stock - cantidad)
         productos[productos.indexOf(producto)] = actualizado
+        publicar()
 
         val detalle = DetalleVenta.crear(
             productoId = productoId,
@@ -94,5 +105,9 @@ class FakeProductoRepository(
         )
     }
 
-    override fun observarProductos(): Flow<List<Producto>> = emptyFlow()
+    override suspend fun sincronizar() {
+        fallaAlSincronizar?.let { throw it }
+    }
+
+    override fun observar(): Flow<List<Producto>> = _estado.asStateFlow()
 }

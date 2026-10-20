@@ -7,41 +7,59 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import pe.edu.upeu.pharmamobil.domain.usecase.ListarClientesUseCase
+import pe.edu.upeu.pharmamobil.domain.mensajeParaUsuario
+import pe.edu.upeu.pharmamobil.domain.usecase.ObservarClientesUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.SincronizarClientesUseCase
+import pe.edu.upeu.pharmamobil.presentation.producto.aErrorApiDePresentacion
 
 class ClienteViewModel(
-    private val listarClientes: ListarClientesUseCase
+    private val observarClientes: ObservarClientesUseCase,
+    private val sincronizarClientes: SincronizarClientesUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ClienteUiState())
     val uiState: StateFlow<ClienteUiState> = _uiState.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            observarClientes().collect { clientes ->
+                val fase = if (clientes.isEmpty()) {
+                    ClienteUiState.Fase.SinClientes
+                } else {
+                    ClienteUiState.Fase.ConClientes(clientes.map { it.aUi() })
+                }
+                _uiState.update { it.copy(fase = fase) }
+            }
+        }
+    }
+
     fun cargarClientes() {
+        sincronizar()
+    }
+
+    fun sincronizar() {
 
         viewModelScope.launch {
 
             _uiState.update {
-                it.copy(fase = ClienteUiState.Fase.Cargando)
+                it.copy(sincronizando = true, avisoRed = null)
             }
 
-            val fase = listarClientes().fold(
-                onSuccess = { clientes ->
-                    if (clientes.isEmpty()) {
-                        ClienteUiState.Fase.SinClientes
-                    } else {
-                        ClienteUiState.Fase.ConClientes(clientes.map { it.aUi() })
+            sincronizarClientes().fold(
+                onSuccess = {
+                    _uiState.update {
+                        it.copy(sincronizando = false, avisoRed = null)
                     }
                 },
                 onFailure = { fallo ->
-                    ClienteUiState.Fase.Error(
-                        fallo.message ?: "No se pudo cargar la cartera de clientes"
-                    )
+                    _uiState.update {
+                        it.copy(
+                            sincronizando = false,
+                            avisoRed = fallo.aErrorApiDePresentacion().mensajeParaUsuario()
+                        )
+                    }
                 }
             )
-
-            _uiState.update {
-                it.copy(fase = fase)
-            }
         }
     }
 

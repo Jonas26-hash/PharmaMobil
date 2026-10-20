@@ -73,7 +73,11 @@ class ClienteRepositorioEnMemoria : ClienteRepository {
         }
     }
 
-    override fun observarClientes(): Flow<List<Cliente>> {
+    override suspend fun sincronizar() {
+        delay(RETARDO_LISTADO_MS)
+    }
+
+    override fun observar(): Flow<List<Cliente>> {
         return _clientes.asStateFlow()
     }
 

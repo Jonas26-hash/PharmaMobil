@@ -43,7 +43,11 @@ class ProductoRepositorioRemoto(
             ).aDominio()
         }
 
-    override fun observarProductos(): Flow<List<Producto>> = flow {
+    override suspend fun sincronizar() = alAplicacion {
+        Unit
+    }
+
+    override fun observar(): Flow<List<Producto>> = flow {
         emit(listar())
     }
 }

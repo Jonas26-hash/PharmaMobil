@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import pe.edu.upeu.pharmamobil.presentation.components.AvisoRed
 import pe.edu.upeu.pharmamobil.presentation.components.EstadoVacio
 
 @Composable
@@ -60,6 +61,12 @@ fun ProductoScreen(
     ) {
 
         EncabezadoInventario(uiState.fase)
+
+        AvisoRed(
+            sincronizando = uiState.sincronizando,
+            avisoRed = uiState.avisoRed,
+            onReintentar = viewModel::cargarProductos
+        )
 
         AvisoOperacion(uiState.operacion)
 
@@ -295,7 +302,7 @@ private fun ProductoItem(
                 )
 
                 Text(
-                    text = "${producto.precio}  ·  ${producto.stock}",
+                    text = "#${producto.id}  ·  ${producto.precio}  ·  ${producto.stock}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -303,6 +310,25 @@ private fun ProductoItem(
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+
+                    if (producto.pendiente) {
+
+                        Surface(
+                            shape = MaterialTheme.shapes.small,
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                        ) {
+
+                            Text(
+                                text = "Pendiente de sincronizar",
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.padding(
+                                    horizontal = 8.dp,
+                                    vertical = 4.dp
+                                )
+                            )
+                        }
+                    }
 
                     if (producto.requiereReposicion) {
 

@@ -2,7 +2,9 @@ package pe.edu.upeu.pharmamobil.presentation.cliente
 
 data class ClienteUiState(
     val fase: Fase = Fase.Cargando,
-    val busqueda: String = ""
+    val busqueda: String = "",
+    val sincronizando: Boolean = false,
+    val avisoRed: String? = null
 ) {
 
     sealed interface Fase {

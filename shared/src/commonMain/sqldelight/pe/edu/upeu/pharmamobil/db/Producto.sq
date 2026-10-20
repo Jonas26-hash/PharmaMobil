@@ -1,0 +1,37 @@
+CREATE TABLE producto (
+    id INTEGER NOT NULL PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    descripcion TEXT,
+    precio REAL NOT NULL,
+    stock INTEGER NOT NULL,
+    requiere_receta INTEGER NOT NULL DEFAULT 0,
+    categoria TEXT NOT NULL DEFAULT '',
+    categoria_id INTEGER,
+    activo INTEGER NOT NULL DEFAULT 1,
+    pendiente INTEGER NOT NULL DEFAULT 0
+);
+
+listarTodos:
+SELECT * FROM producto ORDER BY nombre ASC;
+
+listarPendientes:
+SELECT * FROM producto WHERE pendiente = 1;
+
+buscarPorId:
+SELECT * FROM producto WHERE id = ?;
+
+siguienteIdLocal:
+SELECT COALESCE(MIN(id), 0) FROM producto;
+
+insertar:
+INSERT OR REPLACE INTO producto(id, nombre, descripcion, precio, stock, requiere_receta, categoria, categoria_id, activo, pendiente)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+borrarPorId:
+DELETE FROM producto WHERE id = ?;
+
+borrarSincronizados:
+DELETE FROM producto WHERE pendiente = 0;
+
+contar:
+SELECT COUNT(*) FROM producto;

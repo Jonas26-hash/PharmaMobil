@@ -9,7 +9,8 @@ data class Producto(
     val requiereReceta: Boolean = false,
     val categoria: String = "",
     val categoriaId: Long? = null,
-    val activo: Boolean = true
+    val activo: Boolean = true,
+    val pendiente: Boolean = false
 ) {
     init {
         require(nombre.isNotBlank()) {

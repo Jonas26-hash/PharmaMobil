@@ -1,0 +1,36 @@
+CREATE TABLE cliente (
+    id INTEGER NOT NULL PRIMARY KEY,
+    nombre TEXT NOT NULL,
+    apellido TEXT NOT NULL,
+    dni TEXT NOT NULL,
+    telefono TEXT,
+    email TEXT,
+    direccion TEXT,
+    activo INTEGER NOT NULL DEFAULT 1,
+    pendiente INTEGER NOT NULL DEFAULT 0
+);
+
+listarTodos:
+SELECT * FROM cliente ORDER BY apellido, nombre ASC;
+
+listarPendientes:
+SELECT * FROM cliente WHERE pendiente = 1;
+
+buscarPorId:
+SELECT * FROM cliente WHERE id = ?;
+
+siguienteIdLocal:
+SELECT COALESCE(MIN(id), 0) FROM cliente;
+
+insertar:
+INSERT OR REPLACE INTO cliente(id, nombre, apellido, dni, telefono, email, direccion, activo, pendiente)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+borrarPorId:
+DELETE FROM cliente WHERE id = ?;
+
+borrarSincronizados:
+DELETE FROM cliente WHERE pendiente = 0;
+
+contar:
+SELECT COUNT(*) FROM cliente;

@@ -29,7 +29,11 @@ class ClienteRepositorioRemoto(
         api.obtenerPorId(clienteId).aDominio()
     }
 
-    override fun observarClientes(): Flow<List<Cliente>> = flow {
+    override suspend fun sincronizar() = alAplicacion {
+        Unit
+    }
+
+    override fun observar(): Flow<List<Cliente>> = flow {
         emit(listar())
     }
 }

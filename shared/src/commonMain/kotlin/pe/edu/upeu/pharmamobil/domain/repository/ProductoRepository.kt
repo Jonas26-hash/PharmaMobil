@@ -18,5 +18,7 @@ interface ProductoRepository {
 
     suspend fun registrarVenta(clienteId: Long, productoId: Long, cantidad: Int): Venta
 
-    fun observarProductos(): Flow<List<Producto>>
+    suspend fun sincronizar()
+
+    fun observar(): Flow<List<Producto>>
 }

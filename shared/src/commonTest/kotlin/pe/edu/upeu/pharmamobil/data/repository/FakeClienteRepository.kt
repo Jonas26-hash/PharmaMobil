@@ -1,7 +1,8 @@
 package pe.edu.upeu.pharmamobil.data.repository
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import pe.edu.upeu.pharmamobil.domain.model.Cliente
 import pe.edu.upeu.pharmamobil.domain.repository.ClienteRepository
 
@@ -14,8 +15,14 @@ class FakeClienteRepository(
     var fallaAlEliminar: Throwable? = null
     var fallaAlListar: Throwable? = null
     var fallaAlObtenerPorId: Throwable? = null
+    var fallaAlSincronizar: Throwable? = null
 
+    private val _estado = MutableStateFlow(clientes.toList())
     private var siguienteId = 1L
+
+    private fun publicar() {
+        _estado.value = clientes.toList()
+    }
 
     override suspend fun registrar(cliente: Cliente): Cliente {
 
@@ -23,6 +30,7 @@ class FakeClienteRepository(
 
         val guardado = cliente.copy(id = siguienteId++)
         clientes.add(guardado)
+        publicar()
         return guardado
     }
 
@@ -36,12 +44,14 @@ class FakeClienteRepository(
         }
 
         clientes[indice] = cliente
+        publicar()
         return cliente
     }
 
     override suspend fun eliminar(clienteId: Long) {
         fallaAlEliminar?.let { throw it }
         clientes.removeAll { it.id == clienteId }
+        publicar()
     }
 
     override suspend fun listar(): List<Cliente> {
@@ -59,5 +69,9 @@ class FakeClienteRepository(
             ?: throw NoSuchElementException("Cliente no encontrado con id: $clienteId")
     }
 
-    override fun observarClientes(): Flow<List<Cliente>> = emptyFlow()
+    override suspend fun sincronizar() {
+        fallaAlSincronizar?.let { throw it }
+    }
+
+    override fun observar(): Flow<List<Cliente>> = _estado.asStateFlow()
 }

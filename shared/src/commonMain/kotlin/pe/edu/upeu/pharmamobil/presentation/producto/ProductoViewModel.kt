@@ -9,15 +9,17 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pe.edu.upeu.pharmamobil.domain.ErrorApi
 import pe.edu.upeu.pharmamobil.domain.ErrorDeApi
+import pe.edu.upeu.pharmamobil.domain.mensajeParaUsuario
 import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
-import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
-import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ObservarProductosUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.ProductoInvalidoException
-import pe.edu.upeu.pharmamobil.domain.mensajeParaUsuario
+import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.SincronizarProductosUseCase
 
 class ProductoViewModel(
-    private val listarProductos: ListarProductosUseCase,
+    private val observarProductos: ObservarProductosUseCase,
+    private val sincronizarProductos: SincronizarProductosUseCase,
     private val registrarProducto: RegistrarProductoUseCase? = null,
     private val actualizarProducto: ActualizarProductoUseCase? = null,
     private val eliminarProducto: EliminarProductoUseCase? = null
@@ -26,32 +28,46 @@ class ProductoViewModel(
     private val _uiState = MutableStateFlow(ProductoUiState())
     val uiState: StateFlow<ProductoUiState> = _uiState.asStateFlow()
 
+    init {
+        viewModelScope.launch {
+            observarProductos().collect { productos ->
+                val fase = if (productos.isEmpty()) {
+                    ProductoUiState.Fase.SinProductos
+                } else {
+                    ProductoUiState.Fase.ConProductos(productos.map { it.aUi() })
+                }
+                _uiState.update { it.copy(fase = fase) }
+            }
+        }
+    }
+
     fun cargarProductos() {
+        sincronizar()
+    }
+
+    fun sincronizar() {
 
         viewModelScope.launch {
 
             _uiState.update {
-                it.copy(fase = ProductoUiState.Fase.Cargando)
+                it.copy(sincronizando = true, avisoRed = null)
             }
 
-            val fase = listarProductos().fold(
-                onSuccess = { productos ->
-                    if (productos.isEmpty()) {
-                        ProductoUiState.Fase.SinProductos
-                    } else {
-                        ProductoUiState.Fase.ConProductos(productos.map { it.aUi() })
+            sincronizarProductos().fold(
+                onSuccess = {
+                    _uiState.update {
+                        it.copy(sincronizando = false, avisoRed = null)
                     }
                 },
                 onFailure = { fallo ->
-                    ProductoUiState.Fase.Error(
-                        fallo.message ?: "No se pudo cargar el inventario"
-                    )
+                    _uiState.update {
+                        it.copy(
+                            sincronizando = false,
+                            avisoRed = fallo.aErrorApiDePresentacion().mensajeParaUsuario()
+                        )
+                    }
                 }
             )
-
-            _uiState.update {
-                it.copy(fase = fase)
-            }
         }
     }
 
@@ -104,7 +120,7 @@ class ProductoViewModel(
 
             val fallo = when {
                 resultado == null -> ErrorApi.SinConexion(
-                    "La operaciÃ³n no estÃ¡ disponible en esta configuraciÃ³n."
+                    "La operación no está disponible en esta configuración."
                 )
 
                 resultado.isFailure ->
@@ -131,7 +147,6 @@ class ProductoViewModel(
             _uiState.update {
                 it.copy(operacion = ProductoUiState.Operacion.Inactiva)
             }
-            cargarProductos()
         }
     }
 

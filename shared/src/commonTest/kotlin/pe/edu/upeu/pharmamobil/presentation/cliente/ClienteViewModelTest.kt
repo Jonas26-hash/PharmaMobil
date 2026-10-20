@@ -8,12 +8,14 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import pe.edu.upeu.pharmamobil.data.repository.FakeClienteRepository
 import pe.edu.upeu.pharmamobil.domain.model.Cliente
-import pe.edu.upeu.pharmamobil.domain.usecase.ListarClientesUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ObservarClientesUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.SincronizarClientesUseCase
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ClienteViewModelTest {
@@ -31,22 +33,29 @@ class ClienteViewModelTest {
     private fun nuevoViewModel(
         repositorio: FakeClienteRepository = FakeClienteRepository()
     ) = ClienteViewModel(
-        listarClientes = ListarClientesUseCase(repositorio)
+        observarClientes = ObservarClientesUseCase(repositorio),
+        sincronizarClientes = SincronizarClientesUseCase(repositorio)
     )
 
     @Test
-    fun arrancaEnCargando() = runTest {
+    fun arrancaObservandoLaCarteraLocal() = runTest {
 
-        val viewModel = nuevoViewModel()
+        val repositorio = FakeClienteRepository(
+            mutableListOf(
+                Cliente(id = 1L, nombre = "María", apellido = "García", dni = "12345678")
+            )
+        )
 
-        assertEquals(ClienteUiState.Fase.Cargando, viewModel.uiState.value.fase)
+        val viewModel = nuevoViewModel(repositorio)
+
+        val fase = assertIs<ClienteUiState.Fase.ConClientes>(viewModel.uiState.value.fase)
+        assertEquals("María García", fase.clientes.single().nombreCompleto)
     }
 
     @Test
     fun pasaAFaseSinClientesConLaCarteraVacia() = runTest {
 
         val viewModel = nuevoViewModel()
-        viewModel.cargarClientes()
 
         assertEquals(ClienteUiState.Fase.SinClientes, viewModel.uiState.value.fase)
     }
@@ -66,7 +75,6 @@ class ClienteViewModelTest {
         )
 
         val viewModel = nuevoViewModel(repositorio)
-        viewModel.cargarClientes()
 
         val fase = assertIs<ClienteUiState.Fase.ConClientes>(
             viewModel.uiState.value.fase
@@ -78,20 +86,16 @@ class ClienteViewModelTest {
     }
 
     @Test
-    fun pasaAFaseErrorCuandoElRepositorioFalla() = runTest {
+    fun sincronizarSinRedDejaAvisoDeRed() = runTest {
 
         val repositorio = FakeClienteRepository().apply {
-            fallaAlListar = IllegalStateException("Sin conexión")
+            fallaAlSincronizar = IllegalStateException("Sin conexión")
         }
 
         val viewModel = nuevoViewModel(repositorio)
-        viewModel.cargarClientes()
+        viewModel.sincronizar()
 
-        val fase = assertIs<ClienteUiState.Fase.Error>(
-            viewModel.uiState.value.fase
-        )
-
-        assertEquals("Sin conexión", fase.mensaje)
+        assertEquals("Sin conexión", viewModel.uiState.value.avisoRed)
     }
 
     @Test
@@ -115,7 +119,6 @@ class ClienteViewModelTest {
         )
 
         val viewModel = nuevoViewModel(repositorio)
-        viewModel.cargarClientes()
         viewModel.onBusquedaChange("87654321")
 
         val visibles = viewModel.uiState.value.filtrarPorBusqueda()

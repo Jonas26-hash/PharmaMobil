@@ -9,20 +9,21 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import pe.edu.upeu.pharmamobil.data.repository.FakeProductoRepository
 import pe.edu.upeu.pharmamobil.domain.ErrorApi
-import pe.edu.upeu.pharmamobil.domain.tieneErroresPorCampo
 import pe.edu.upeu.pharmamobil.domain.model.Producto
+import pe.edu.upeu.pharmamobil.domain.tieneErroresPorCampo
 import pe.edu.upeu.pharmamobil.domain.usecase.ActualizarProductoUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.EliminarProductoUseCase
-import pe.edu.upeu.pharmamobil.domain.usecase.ListarProductosUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.ObservarProductosUseCase
 import pe.edu.upeu.pharmamobil.domain.usecase.RegistrarProductoUseCase
+import pe.edu.upeu.pharmamobil.domain.usecase.SincronizarProductosUseCase
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertTrue
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProductoViewModelTest {
@@ -40,25 +41,32 @@ class ProductoViewModelTest {
     private fun nuevoViewModel(
         repositorio: FakeProductoRepository = FakeProductoRepository()
     ) = ProductoViewModel(
-        listarProductos = ListarProductosUseCase(repositorio),
+        observarProductos = ObservarProductosUseCase(repositorio),
+        sincronizarProductos = SincronizarProductosUseCase(repositorio),
         registrarProducto = RegistrarProductoUseCase(repositorio),
         actualizarProducto = ActualizarProductoUseCase(repositorio),
         eliminarProducto = EliminarProductoUseCase(repositorio)
     )
 
     @Test
-    fun arrancaEnCargando() = runTest {
+    fun arrancaObservandoElInventarioLocal() = runTest {
 
-        val viewModel = nuevoViewModel()
+        val repositorio = FakeProductoRepository(
+            mutableListOf(
+                Producto(id = 1L, nombre = "Paracetamol", precio = 12.50, stock = 5, categoriaId = 1L)
+            )
+        )
 
-        assertEquals(ProductoUiState.Fase.Cargando, viewModel.uiState.value.fase)
+        val viewModel = nuevoViewModel(repositorio)
+
+        val fase = assertIs<ProductoUiState.Fase.ConProductos>(viewModel.uiState.value.fase)
+        assertEquals("Paracetamol", fase.productos.single().nombre)
     }
 
     @Test
     fun pasaAFaseSinProductosConElInventarioVacio() = runTest {
 
         val viewModel = nuevoViewModel()
-        viewModel.cargarProductos()
 
         assertEquals(ProductoUiState.Fase.SinProductos, viewModel.uiState.value.fase)
     }
@@ -79,7 +87,6 @@ class ProductoViewModelTest {
         )
 
         val viewModel = nuevoViewModel(repositorio)
-        viewModel.cargarProductos()
 
         val fase = assertIs<ProductoUiState.Fase.ConProductos>(
             viewModel.uiState.value.fase
@@ -91,20 +98,21 @@ class ProductoViewModelTest {
     }
 
     @Test
-    fun pasaAFaseErrorCuandoElRepositorioFalla() = runTest {
+    fun sincronizarSinRedDejaAvisoDeRedSinCambiarElInventario() = runTest {
 
-        val repositorio = FakeProductoRepository().apply {
-            fallaAlListar = IllegalStateException("Sin conexión")
+        val repositorio = FakeProductoRepository(
+            mutableListOf(
+                Producto(id = 1L, nombre = "Paracetamol", precio = 12.50, stock = 5, categoriaId = 1L)
+            )
+        ).apply {
+            fallaAlSincronizar = IllegalStateException("Sin conexión")
         }
 
         val viewModel = nuevoViewModel(repositorio)
-        viewModel.cargarProductos()
+        viewModel.sincronizar()
 
-        val fase = assertIs<ProductoUiState.Fase.Error>(
-            viewModel.uiState.value.fase
-        )
-
-        assertEquals("Sin conexión", fase.mensaje)
+        assertEquals("Sin conexión", viewModel.uiState.value.avisoRed)
+        assertIs<ProductoUiState.Fase.ConProductos>(viewModel.uiState.value.fase)
     }
 
     @Test
@@ -118,7 +126,6 @@ class ProductoViewModelTest {
         )
 
         val viewModel = nuevoViewModel(repositorio)
-        viewModel.cargarProductos()
         viewModel.onBusquedaChange("ibu")
 
         val visibles = viewModel.uiState.value.filtrarPorBusqueda()
@@ -126,37 +133,19 @@ class ProductoViewModelTest {
         assertEquals(listOf("Ibuprofeno"), visibles.map { it.nombre })
     }
 
-
     @Test
-    fun faseCargandoPasaAConProductosCuandoHayDatos() = runTest {
+    fun elInventarioSeActualizaSoloCuandoElRepositorioCambia() = runTest {
 
-        val repositorio = FakeProductoRepository(
-            mutableListOf(
-                Producto(id = 1L, nombre = "Paracetamol", precio = 12.50, stock = 5, categoriaId = 1L)
-            )
-        )
-
+        val repositorio = FakeProductoRepository()
         val viewModel = nuevoViewModel(repositorio)
 
-        assertEquals(ProductoUiState.Fase.Cargando, viewModel.uiState.value.fase)
-
-        viewModel.cargarProductos()
+        repositorio.registrar(
+            Producto(id = 0L, nombre = "Ibuprofeno", precio = 8.90, stock = 3, categoriaId = 1L)
+        )
 
         val fase = assertIs<ProductoUiState.Fase.ConProductos>(viewModel.uiState.value.fase)
         assertEquals(1, fase.productos.size)
-        assertEquals("Paracetamol", fase.productos.first().nombre)
-    }
-
-    @Test
-    fun faseCargandoPasaASinProductosCuandoInventarioVacio() = runTest {
-
-        val viewModel = nuevoViewModel()
-
-        assertEquals(ProductoUiState.Fase.Cargando, viewModel.uiState.value.fase)
-
-        viewModel.cargarProductos()
-
-        assertEquals(ProductoUiState.Fase.SinProductos, viewModel.uiState.value.fase)
+        assertEquals("Ibuprofeno", fase.productos.first().nombre)
     }
 
     @Test
@@ -180,7 +169,7 @@ class ProductoViewModelTest {
     }
 
     @Test
-    fun eliminarProductoPasaAEnCursoEliminarYLuegoInactivaConRecarga() = runTest {
+    fun eliminarProductoPasaAInactivaYLasListaSeActualizaSola() = runTest {
 
         val productoExistente = Producto(
             id = 42L,
@@ -192,7 +181,6 @@ class ProductoViewModelTest {
         val repositorio = FakeProductoRepository(mutableListOf(productoExistente))
         val viewModel = nuevoViewModel(repositorio)
 
-        viewModel.cargarProductos()
         val faseInicial = assertIs<ProductoUiState.Fase.ConProductos>(viewModel.uiState.value.fase)
         assertEquals(1, faseInicial.productos.size)
 
@@ -215,5 +203,22 @@ class ProductoViewModelTest {
         job.join()
 
         assertEquals(ProductoUiState.Operacion.Inactiva, viewModel.uiState.value.operacion)
+    }
+
+    @Test
+    fun sincronizarExitosoLimpiaElAvisoDeRed() = runTest {
+
+        val repositorio = FakeProductoRepository().apply {
+            fallaAlSincronizar = IllegalStateException("Sin conexión")
+        }
+        val viewModel = nuevoViewModel(repositorio)
+
+        viewModel.sincronizar()
+        assertNotNull(viewModel.uiState.value.avisoRed)
+
+        repositorio.fallaAlSincronizar = null
+        viewModel.sincronizar()
+
+        assertNull(viewModel.uiState.value.avisoRed)
     }
 }

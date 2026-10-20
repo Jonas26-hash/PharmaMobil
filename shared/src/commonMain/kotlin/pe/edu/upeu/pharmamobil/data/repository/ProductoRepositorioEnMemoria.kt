@@ -115,7 +115,11 @@ class ProductoRepositorioEnMemoria : ProductoRepository {
         }
     }
 
-    override fun observarProductos(): Flow<List<Producto>> {
+    override suspend fun sincronizar() {
+        delay(RETARDO_LISTADO_MS)
+    }
+
+    override fun observar(): Flow<List<Producto>> {
         return _productos.asStateFlow()
     }
 

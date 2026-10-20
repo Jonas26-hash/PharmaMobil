@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import pe.edu.upeu.pharmamobil.presentation.components.AvisoRed
 import pe.edu.upeu.pharmamobil.presentation.components.EstadoVacio
 
 @Composable
@@ -60,6 +61,12 @@ fun ClienteScreen(
     ) {
 
         EncabezadoCartera(uiState.fase)
+
+        AvisoRed(
+            sincronizando = uiState.sincronizando,
+            avisoRed = uiState.avisoRed,
+            onReintentar = viewModel::cargarClientes
+        )
 
         OutlinedTextField(
             value = uiState.busqueda,
@@ -238,12 +245,31 @@ private fun ClienteItem(
                 )
 
                 Text(
-                    text = "DNI ${cliente.dni}  ·  ${cliente.telefono}",
+                    text = "#${cliente.id}  ·  DNI ${cliente.dni}  ·  ${cliente.telefono}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+
+                    if (cliente.pendiente) {
+
+                        Surface(
+                            shape = MaterialTheme.shapes.small,
+                            color = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                        ) {
+
+                            Text(
+                                text = "Pendiente de sincronizar",
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.padding(
+                                    horizontal = 8.dp,
+                                    vertical = 4.dp
+                                )
+                            )
+                        }
+                    }
 
                     if (!cliente.activo) {
 

@@ -5,7 +5,9 @@ import pe.edu.upeu.pharmamobil.domain.ErrorApi
 data class ProductoUiState(
     val fase: Fase = Fase.Cargando,
     val operacion: Operacion = Operacion.Inactiva,
-    val busqueda: String = ""
+    val busqueda: String = "",
+    val sincronizando: Boolean = false,
+    val avisoRed: String? = null
 ) {
 
     sealed interface Fase {
