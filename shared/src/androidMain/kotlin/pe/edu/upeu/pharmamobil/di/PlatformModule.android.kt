@@ -1,6 +1,5 @@
 package pe.edu.upeu.pharmamobil.di
 
-import android.content.Context
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -19,7 +18,4 @@ actual val platformModule: Module = module {
     single<CreadorDeDriver> { CreadorDeDriverAndroid(androidContext()) }
     single<MonitorDeConectividad> { MonitorDeConectividadAndroid(androidContext()) }
     single<RegistroDeSincronizacion> { RegistroDeSincronizacionAndroid(androidContext()) }
-    single<Context> { androidContext() }
 }
-
-internal fun org.koin.core.Koin.contextoDeLaAplicacion(): Context = get<Context>()
