@@ -10,7 +10,9 @@ data class Producto(
     val categoria: String = "",
     val categoriaId: Long? = null,
     val activo: Boolean = true,
-    val pendiente: Boolean = false
+    val pendiente: Boolean = false,
+    val intentos: Int = 0,
+    val ultimoError: String? = null
 ) {
     init {
         require(nombre.isNotBlank()) {

@@ -8,14 +8,40 @@ CREATE TABLE producto (
     categoria TEXT NOT NULL DEFAULT '',
     categoria_id INTEGER,
     activo INTEGER NOT NULL DEFAULT 1,
-    pendiente INTEGER NOT NULL DEFAULT 0
+    pendiente INTEGER NOT NULL DEFAULT 0,
+    intentos INTEGER NOT NULL DEFAULT 0,
+    ultimoError TEXT
 );
 
 listarTodos:
 SELECT * FROM producto ORDER BY nombre ASC;
 
 listarPendientes:
-SELECT * FROM producto WHERE pendiente = 1;
+SELECT * FROM producto WHERE pendiente = 1 AND intentos < :maxIntentos ORDER BY id;
+
+listarFallidos:
+SELECT * FROM producto WHERE pendiente = 1 AND intentos >= :maxIntentos ORDER BY id;
+
+observarPendientes:
+SELECT COUNT(*) FROM producto WHERE pendiente = 1 AND intentos < :maxIntentos;
+
+observarFallidas:
+SELECT COUNT(*) FROM producto WHERE pendiente = 1 AND intentos >= :maxIntentos;
+
+contarPendientes:
+SELECT COUNT(*) FROM producto WHERE pendiente = 1 AND intentos < :maxIntentos;
+
+contarFallidas:
+SELECT COUNT(*) FROM producto WHERE pendiente = 1 AND intentos >= :maxIntentos;
+
+sumarIntento:
+UPDATE producto SET intentos = intentos + 1, ultimoError = :ultimoError WHERE id = :id;
+
+reiniciarIntentos:
+UPDATE producto SET intentos = 0, ultimoError = NULL WHERE id = :id;
+
+limpiarFallidos:
+DELETE FROM producto WHERE pendiente = 1 AND intentos >= 5;
 
 buscarPorId:
 SELECT * FROM producto WHERE id = ?;
@@ -24,8 +50,8 @@ siguienteIdLocal:
 SELECT COALESCE(MIN(id), 0) FROM producto;
 
 insertar:
-INSERT OR REPLACE INTO producto(id, nombre, descripcion, precio, stock, requiere_receta, categoria, categoria_id, activo, pendiente)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO producto(id, nombre, descripcion, precio, stock, requiere_receta, categoria, categoria_id, activo, pendiente, intentos, ultimoError)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 borrarPorId:
 DELETE FROM producto WHERE id = ?;

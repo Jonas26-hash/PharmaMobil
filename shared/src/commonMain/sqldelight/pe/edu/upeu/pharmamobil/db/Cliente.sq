@@ -7,14 +7,40 @@ CREATE TABLE cliente (
     email TEXT,
     direccion TEXT,
     activo INTEGER NOT NULL DEFAULT 1,
-    pendiente INTEGER NOT NULL DEFAULT 0
+    pendiente INTEGER NOT NULL DEFAULT 0,
+    intentos INTEGER NOT NULL DEFAULT 0,
+    ultimoError TEXT
 );
 
 listarTodos:
 SELECT * FROM cliente ORDER BY apellido, nombre ASC;
 
 listarPendientes:
-SELECT * FROM cliente WHERE pendiente = 1;
+SELECT * FROM cliente WHERE pendiente = 1 AND intentos < :maxIntentos ORDER BY id;
+
+listarFallidos:
+SELECT * FROM cliente WHERE pendiente = 1 AND intentos >= :maxIntentos ORDER BY id;
+
+observarPendientes:
+SELECT COUNT(*) FROM cliente WHERE pendiente = 1 AND intentos < :maxIntentos;
+
+observarFallidas:
+SELECT COUNT(*) FROM cliente WHERE pendiente = 1 AND intentos >= :maxIntentos;
+
+contarPendientes:
+SELECT COUNT(*) FROM cliente WHERE pendiente = 1 AND intentos < :maxIntentos;
+
+contarFallidas:
+SELECT COUNT(*) FROM cliente WHERE pendiente = 1 AND intentos >= :maxIntentos;
+
+sumarIntento:
+UPDATE cliente SET intentos = intentos + 1, ultimoError = :ultimoError WHERE id = :id;
+
+reiniciarIntentos:
+UPDATE cliente SET intentos = 0, ultimoError = NULL WHERE id = :id;
+
+limpiarFallidos:
+DELETE FROM cliente WHERE pendiente = 1 AND intentos >= 5;
 
 buscarPorId:
 SELECT * FROM cliente WHERE id = ?;
@@ -23,8 +49,8 @@ siguienteIdLocal:
 SELECT COALESCE(MIN(id), 0) FROM cliente;
 
 insertar:
-INSERT OR REPLACE INTO cliente(id, nombre, apellido, dni, telefono, email, direccion, activo, pendiente)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO cliente(id, nombre, apellido, dni, telefono, email, direccion, activo, pendiente, intentos, ultimoError)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 borrarPorId:
 DELETE FROM cliente WHERE id = ?;

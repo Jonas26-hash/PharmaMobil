@@ -16,6 +16,13 @@ import androidx.compose.material.icons.filled.LocalPharmacy
 import androidx.compose.material.icons.filled.Medication
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -31,8 +38,16 @@ import pe.edu.upeu.pharmamobil.navigation.Screen
 
 @Composable
 fun InicioScreen(
-    onNavegar: (Screen) -> Unit
+    onNavegar: (Screen) -> Unit,
+    onSolicitarNotificaciones: () -> Unit = {},
+    onAbrirAjustesPermiso: () -> Unit = {},
+    onSincronizar: () -> Unit = {},
+    onReintentarFallidas: () -> Unit = {},
+    erroresSync: List<String> = emptyList()
 ) {
+    var mostrarExplicacion by remember { mutableStateOf(false) }
+    var mostrarAjustes by remember { mutableStateOf(false) }
+    var permisoSolicitado by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -43,6 +58,33 @@ fun InicioScreen(
     ) {
 
         Portada()
+
+        EstadoSincronizacionCard(onSincronizar, onReintentarFallidas, erroresSync)
+
+        AccesoRapido(
+            icono = Icons.Default.Notifications,
+            titulo = "Activar notificaciones",
+            descripcion = "Recibe avisos importantes de PharmaMobil.",
+            onClick = {
+                if (permisoSolicitado) mostrarAjustes = true else mostrarExplicacion = true
+            }
+        )
+
+        if (mostrarExplicacion) AlertDialog(
+            onDismissRequest = { mostrarExplicacion = false },
+            title = { Text("Permitir notificaciones") },
+            text = { Text("PharmaMobil puede enviarte avisos sobre cambios y sincronización. Puedes cambiar este permiso cuando quieras en Ajustes.") },
+            confirmButton = { TextButton(onClick = { mostrarExplicacion = false; permisoSolicitado = true; onSolicitarNotificaciones() }) { Text("Continuar") } },
+            dismissButton = { TextButton(onClick = { mostrarExplicacion = false }) { Text("Ahora no") } }
+        )
+
+        if (mostrarAjustes) AlertDialog(
+            onDismissRequest = { mostrarAjustes = false },
+            title = { Text("Permiso desactivado") },
+            text = { Text("Activa las notificaciones desde Ajustes de la aplicación para recuperar esta función.") },
+            confirmButton = { TextButton(onClick = { mostrarAjustes = false; onAbrirAjustesPermiso() }) { Text("Abrir Ajustes") } },
+            dismissButton = { TextButton(onClick = { mostrarAjustes = false }) { Text("Cerrar") } }
+        )
 
         Text(
             text = "Qué puedes hacer",

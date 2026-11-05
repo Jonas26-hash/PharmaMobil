@@ -55,6 +55,8 @@ import org.koin.compose.KoinContext
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import pe.edu.upeu.pharmamobil.data.auth.GestorSesion
+import pe.edu.upeu.pharmamobil.data.local.ClienteRepositorioOffline
+import pe.edu.upeu.pharmamobil.data.local.ProductoRepositorioOffline
 import pe.edu.upeu.pharmamobil.domain.auth.AuthRepository
 import pe.edu.upeu.pharmamobil.domain.auth.Permisos
 import pe.edu.upeu.pharmamobil.domain.auth.Sesion
@@ -88,8 +90,11 @@ private val DESTINOS = listOf(
 )
 
 @Composable
-fun App() = KoinContext {
-
+fun App(
+    onSolicitarNotificaciones: () -> Unit = {},
+    onAbrirAjustesPermiso: () -> Unit = {}
+) = KoinContext {
+    println("APP_DEBUG: Inicio de App UI")
     val gestorSesion = koinInject<GestorSesion>()
     val authRepository = koinInject<AuthRepository>()
     val scope = rememberCoroutineScope()
@@ -113,6 +118,8 @@ fun App() = KoinContext {
 
         ContenidoAutenticado(
             sesion = actual,
+            onSolicitarNotificaciones = onSolicitarNotificaciones,
+            onAbrirAjustesPermiso = onAbrirAjustesPermiso,
             onCerrarSesion = {
                 scope.launch {
                     runCatching { authRepository.cerrarSesion() }
@@ -126,6 +133,8 @@ fun App() = KoinContext {
 @Composable
 private fun ContenidoAutenticado(
     sesion: Sesion,
+    onSolicitarNotificaciones: () -> Unit,
+    onAbrirAjustesPermiso: () -> Unit,
     onCerrarSesion: () -> Unit
 ) {
 
@@ -142,6 +151,9 @@ private fun ContenidoAutenticado(
     )
 
     val scope = rememberCoroutineScope()
+
+    val productoOffline = koinInject<ProductoRepositorioOffline>()
+    val clienteOffline = koinInject<ClienteRepositorioOffline>()
 
     val destinos = remember(sesion) {
         DESTINOS.filter { destino ->
@@ -280,6 +292,16 @@ private fun ContenidoAutenticado(
 
                         Screen.Inicio ->
                             InicioScreen(
+                                onSolicitarNotificaciones = onSolicitarNotificaciones,
+                                onAbrirAjustesPermiso = onAbrirAjustesPermiso,
+                                onSincronizar = { pantallaActual = Screen.Productos },
+                                onReintentarFallidas = {
+                                    scope.launch {
+                                        productoOffline.reintentarFallidos()
+                                        clienteOffline.reintentarFallidos()
+                                    }
+                                },
+                                erroresSync = productoOffline.ultimoErrores() + clienteOffline.ultimoErrores(),
                                 onNavegar = { destino -> pantallaActual = destino }
                             )
 

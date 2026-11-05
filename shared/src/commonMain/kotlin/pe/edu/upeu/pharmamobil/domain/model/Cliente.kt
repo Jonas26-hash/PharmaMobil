@@ -9,7 +9,9 @@ data class Cliente(
     val email: String? = null,
     val direccion: String? = null,
     val activo: Boolean = true,
-    val pendiente: Boolean = false
+    val pendiente: Boolean = false,
+    val intentos: Int = 0,
+    val ultimoError: String? = null
 ) {
     init {
         require(nombre.isNotBlank()) {

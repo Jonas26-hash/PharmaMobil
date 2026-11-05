@@ -15,6 +15,8 @@ import pe.edu.upeu.pharmamobil.domain.security.AlmacenSeguro
 actual val platformModule: Module = module {
 
     single<AlmacenSeguro> { AlmacenSeguroAndroid(androidContext()) }
+    single { pe.edu.upeu.pharmamobil.data.permiso.GestorPermisosAndroid(androidContext()) }
+    single<pe.edu.upeu.pharmamobil.domain.permiso.GestorPermisos> { get<pe.edu.upeu.pharmamobil.data.permiso.GestorPermisosAndroid>() }
     single<CreadorDeDriver> { CreadorDeDriverAndroid(androidContext()) }
     single<MonitorDeConectividad> { MonitorDeConectividadAndroid(androidContext()) }
     single<RegistroDeSincronizacion> { RegistroDeSincronizacionAndroid(androidContext()) }

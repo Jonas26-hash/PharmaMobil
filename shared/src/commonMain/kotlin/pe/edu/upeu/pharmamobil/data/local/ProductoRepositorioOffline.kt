@@ -1,6 +1,10 @@
 package pe.edu.upeu.pharmamobil.data.local
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.delay
+import pe.edu.upeu.pharmamobil.domain.usecase.esperaReintentoMillis
+import pe.edu.upeu.pharmamobil.domain.usecase.tipoFalloSync
+import pe.edu.upeu.pharmamobil.domain.usecase.TipoFalloSync
 import pe.edu.upeu.pharmamobil.ahoraEnMilisegundos
 import pe.edu.upeu.pharmamobil.data.remote.DetalleVentaRequestDto
 import pe.edu.upeu.pharmamobil.data.remote.ProductoApi
@@ -24,6 +28,13 @@ class ProductoRepositorioOffline(
     private val conectividad: MonitorDeConectividad,
     private val registroSincronizacion: RegistroDeSincronizacion
 ) : ProductoRepository {
+
+    suspend fun reintentarFallidos(): Result<Unit> = runCatching {
+        local.reiniciarIntentosFallidos()
+        sincronizar()
+    }
+
+    fun ultimoErrores() = local.fallidosDetallados().mapNotNull { it.ultimoError }
 
     override fun observar(): Flow<List<Producto>> = local.observar()
 
@@ -88,8 +99,8 @@ class ProductoRepositorioOffline(
             val falloDeSubida = subirPendientes()
             val remotos = remoto.listar().map { it.aDominio() }.filter { it.activo }
             local.reemplazarSincronizados(remotos)
-            registroSincronizacion.registrarUltimaSincronizacion(ahoraEnMilisegundos())
             falloDeSubida?.let { throw it }
+            registroSincronizacion.registrarUltimaSincronizacion(ahoraEnMilisegundos())
         }
     }
 
@@ -99,19 +110,35 @@ class ProductoRepositorioOffline(
 
         var primerFallo: Throwable? = null
 
-        local.pendientes().forEach { pendiente ->
+        local.pendientes(MAX_INTENTOS.toLong()).forEach { pendiente ->
             try {
                 val subido = remoto.registrar(pendiente.aRemoto()).aDominio()
                 local.reemplazarPendiente(pendiente.id, subido)
             } catch (cancelacion: CancellationException) {
                 throw cancelacion
             } catch (fallo: Throwable) {
+                val error = (fallo as? ErrorDeApi)?.error
+                val motivo = ((fallo as? ErrorDeApi)?.mensaje ?: fallo.message)
+                    ?.take(240) ?: "Error de sincronización"
+                when (error?.tipoFalloSync()) {
+                    TipoFalloSync.TRANSITORIO, null -> {
+                        local.sumarIntento(pendiente.id, motivo)
+                        delay(esperaReintentoMillis(pendiente.intentos))
+                    }
+                    TipoFalloSync.PERMANENTE -> {
+                        repeat((MAX_INTENTOS - pendiente.intentos).coerceAtLeast(1)) {
+                            local.sumarIntento(pendiente.id, motivo)
+                        }
+                    }
+                }
                 if (primerFallo == null) primerFallo = fallo
             }
         }
 
         return primerFallo
     }
+
+    private companion object { const val MAX_INTENTOS = 5 }
 
     private suspend fun intentar(bloque: suspend () -> Unit) {
         try {

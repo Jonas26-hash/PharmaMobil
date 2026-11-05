@@ -8,8 +8,12 @@ import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import pe.edu.upeu.pharmamobil.data.auth.GestorSesion
+import pe.edu.upeu.pharmamobil.data.firebase.TelemetriaFirebase
 import pe.edu.upeu.pharmamobil.data.local.CategoriaLocal
+import pe.edu.upeu.pharmamobil.data.local.EstadoColaLocalRepository
 import pe.edu.upeu.pharmamobil.data.local.CategoriaRepositorioOffline
+import pe.edu.upeu.pharmamobil.data.local.RegistroDeSincronizacion
+import pe.edu.upeu.pharmamobil.data.local.RegistroSincronizacionMemoria
 import pe.edu.upeu.pharmamobil.data.local.CreadorDeDriver
 import pe.edu.upeu.pharmamobil.data.local.ClienteLocal
 import pe.edu.upeu.pharmamobil.data.local.ClienteRepositorioOffline
@@ -25,6 +29,8 @@ import pe.edu.upeu.pharmamobil.data.remote.crearHttpClient
 import pe.edu.upeu.pharmamobil.data.remote.crearMotorHttp
 import pe.edu.upeu.pharmamobil.db.PharmaDb
 import pe.edu.upeu.pharmamobil.domain.auth.AuthRepository
+import pe.edu.upeu.pharmamobil.domain.permiso.GestorPermisos
+import pe.edu.upeu.pharmamobil.domain.port.Telemetria
 import pe.edu.upeu.pharmamobil.domain.repository.CategoriaRepository
 import pe.edu.upeu.pharmamobil.domain.repository.ClienteRepository
 import pe.edu.upeu.pharmamobil.domain.repository.ProductoRepository
@@ -54,6 +60,8 @@ import pe.edu.upeu.pharmamobil.presentation.producto.ProductoViewModel
 val dataModule = module {
 
     single { GestorSesion(get()) }
+    single<Telemetria> { TelemetriaFirebase() }
+    single<RegistroDeSincronizacion> { RegistroSincronizacionMemoria }
 
     single<HttpClientEngine> { crearMotorHttp() }
     single<HttpClient> {
@@ -76,10 +84,16 @@ val dataModule = module {
     single { ProductoLocal(get()) }
     single { ClienteLocal(get()) }
     single { CategoriaLocal(get()) }
+    single { EstadoColaLocalRepository(get(), get()) }
 
-    single<ProductoRepository> { ProductoRepositorioOffline(get(), get(), get(), get(), get()) }
-    single<ClienteRepository> { ClienteRepositorioOffline(get(), get(), get()) }
-    single<CategoriaRepository> { CategoriaRepositorioOffline(get(), get(), get()) }
+    single { ProductoRepositorioOffline(get(), get(), get(), get(), get()) }
+    single<ProductoRepository> { get<ProductoRepositorioOffline>() }
+
+    single { ClienteRepositorioOffline(get(), get(), get()) }
+    single<ClienteRepository> { get<ClienteRepositorioOffline>() }
+
+    single { CategoriaRepositorioOffline(get(), get(), get()) }
+    single<CategoriaRepository> { get<CategoriaRepositorioOffline>() }
 }
 
 val domainModule = module {

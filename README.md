@@ -255,14 +255,47 @@ Endpoints que consume la app:
 | POST | `/auth/login` | Autenticación: devuelve `{ token, tipo, expiraEnSegundos, username, nombreCompleto, roles, permisos }` |
 | GET | `/auth/me` | Reconstruye la sesión desde el token (`Bearer`): `{ id, username, empleadoId, empleadoNombre, cargo, roles, permisos, estado, fechaCreacion }` |
 
+## Persistencia offline-first (Sesión 11)
+
+La base de datos local es la **única fuente de verdad** de los listados. La app puede leer y registrar sin conexión; el servidor solo se consulta para subir pendientes y refrescar la copia.
+
+### Esquema
+
+SQLDelight 2.4.1 genera el acceso tipado a `pharma.db` desde `shared/src/commonMain/sqldelight/pe/edu/upeu/pharmamobil/db/`:
+
+- `Producto.sq`: tabla `producto(id, nombre, descripcion, precio, stock, requiere_receta, categoria, categoria_id, activo, pendiente)`.
+- `Cliente.sq`: tabla `cliente(...)` con su columna `pendiente`.
+- `Categoria.sq`: catálogo `categoria(...)`, sin pendientes.
+
+La columna `pendiente` marca lo aún no subido. Consultas: `listarTodos`, `listarPendientes`, `insertar`, `borrarPorId`, `borrarSincronizados` y `siguienteIdLocal`.
+
+La clase generada es `PharmaDb` (paquete `pe.edu.upeu.pharmamobil.db`). El driver se crea en cada plataforma mediante la interfaz `CreadorDeDriver` (`CreadorDeDriverAndroid` con `AndroidSqliteDriver`, `CreadorDeDriverIos` con `NativeSqliteDriver`); `dataModule` hace `PharmaDb(get<CreadorDeDriver>().crear())`.
+
+### Capa local
+
+- `ProductoLocal` / `ClienteLocal` / `CategoriaLocal` (en `commonMain/data/local`) exponen `observar(): Flow<List<T>>`, `pendientes()`, `guardarPendiente()`, `reemplazarPendiente()` y `reemplazarSincronizados()`. No conocen Ktor ni los DTO: solo dominio y SQLDelight.
+- Al guardar un registro sin conexión se le asigna un **id negativo**: `minOf(siguienteIdLocal(), 0) - 1`, de modo que nunca colisiona con los id del servidor.
+
+### Estrategia de sincronización
+
+`ProductoRepositorioOffline` y `ClienteRepositorioOffline` implementan la interfaz de dominio con dos operaciones nuevas:
+
+- `observar(): Flow<List<T>>` — el ViewModel se suscribe en `init` y la lista se actualiza sola; no hay «recargar» manual.
+- `sincronizar()` — **primero sube los pendientes** (`POST` por cada fila `pendiente = 1`, y al responder el servidor se reemplaza el id temporal por el real dentro de una transacción) **y después baja** el listado completo (`borrarSincronizados` + reinsertar).
+
+`registrar()` guarda localmente como pendiente e intenta sincronizar: si no hay red, el registro queda visible en la app con id negativo y se sube en la próxima sincronización. Actualizar y eliminar siguen requiriendo conexión (sin red, `ErrorApi.SinConexion` lo muestra la UI).
+
+El flujo es: ViewModel (`sincronizar()` con estado `sincronizando` y `avisoRed`) → `SincronizarProductosUseCase`/`SincronizarClientesUseCase` (`resultadoDe`) → repositorio offline → `ProductoLocal` sobre `PharmaDb`.
+
 ## Pruebas
 
 - `commonTest` cubre modelos, validaciones, casos de uso (éxito y error), repositorios en memoria, fakes, los ViewModels (incluido `LoginViewModel`), el filtro de los listados, el formato de precio, los mappers DTO ↔ dominio, las APIs con `MockEngine` (productos, clientes, categorías, ventas y **auth**) y el grafo de Koin completo.
-- Ejecución: `./gradlew :shared:testAndroidHostTest` (**159 casos, 0 fallos**).
+- Ejecución: `./gradlew :shared:testAndroidHostTest` (**165 casos, 0 fallos**).
 - Las pruebas de red no salen a internet: `crearHttpClient(MockEngine { … })` reproduce las respuestas y comprueba rutas, verbos, query de paginación y cuerpo JSON.
 - `MensajesDeErrorTest`: cubre que 401 → `NoAutorizado`/`CredencialesInvalidas` y 403 → `Prohibido`, y que `esFalloDeAutenticacion` los reconoce.
 - `SesionTest` fija la lógica de permisos (`puede`/`puedeAlguno`) y `AuthApiTest` / `AuthRepositorioRemotoTest` verifican el login y `/auth/me` contra `MockEngine`, incluido el mapeo del 401 a credenciales inválidas.
 - `ListadoDeActivosTest` fija el comportamiento de la baja lógica: `DELETE` devuelve 204 pero el registro queda con `estado = false`, así que el repositorio filtra los desactivados al listar.
+- `RepositorioOfflineTest` cubre la estrategia offline-first con `PharmaDb` sobre `JdbcSqliteDriver(IN_MEMORY)`: guardar copia local y listar sin red, caída del servidor devolviendo la copia local, registro con id negativo y `pendiente = 1`, `observar()` emitiendo los cambios locales, y `sincronizar()` subiendo los pendientes para reemplazar el id temporal por el del servidor.
 
 ### Verificación contra el backend real
 

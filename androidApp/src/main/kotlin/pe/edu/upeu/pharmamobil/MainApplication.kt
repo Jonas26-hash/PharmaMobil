@@ -8,11 +8,15 @@ import pe.edu.upeu.pharmamobil.di.initKoin
 class MainApplication : Application() {
 
     override fun onCreate() {
-        super.onCreate()
-
-        initKoin {
-            androidLogger()
-            androidContext(this@MainApplication)
+        try {
+            super.onCreate()
+            initKoin {
+                androidLogger()
+                androidContext(this@MainApplication)
+            }
+        } catch (e: Throwable) {
+            android.util.Log.e("CRITICAL_CRASH", "Fallo al iniciar MainApplication", e)
+            println("CRITICAL_CRASH: ${e.stackTraceToString()}")
         }
     }
 }
